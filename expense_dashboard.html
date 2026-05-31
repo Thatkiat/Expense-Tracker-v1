@@ -1,0 +1,3792 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#2563EB">
+<meta name="apple-mobile-web-app-title" content="ค่าใช้จ่าย">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon.svg">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<title>Field Expense Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#2563EB;--primary-d:#1D4ED8;--primary-lt:#EFF6FF;
+  --green:#10B981;--green-lt:#ECFDF5;
+  --amber:#F59E0B;--amber-lt:#FFFBEB;
+  --red:#EF4444;--red-lt:#FEF2F2;
+  --bg:#F1F5F9;--card:#fff;--text:#1E293B;--muted:#64748B;
+  --border:#E2E8F0;--shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.1);
+  --r:12px;--r-sm:8px;--nav:64px;--hdr:56px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans Thai',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;min-height:100vh;overflow-x:hidden;position:relative}
+
+/* ─── HEADER ─── */
+.hdr{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:var(--hdr);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;z-index:100;gap:10px}
+.hdr-logo{width:32px;height:32px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;flex-shrink:0}
+.hdr-title{font-size:15px;font-weight:700;flex:1;line-height:1.2}
+.hdr-sub{font-size:11px;color:var(--muted)}
+.hdr-btn{width:34px;height:34px;border-radius:50%;border:none;background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:var(--muted)}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:4px;display:inline-block}
+.conn-dot.off{background:var(--red)}
+.conn-dot.pend{background:var(--amber)}
+
+/* ─── MAIN ─── */
+.main{padding-top:calc(var(--hdr) + 10px);padding-bottom:calc(var(--nav) + 16px);min-height:100vh}
+
+/* ─── VIEWS ─── */
+.view{display:none;padding:12px;animation:fadeUp .2s ease}
+.view.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── NAV ─── */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:var(--nav);background:var(--card);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:100;padding-bottom:env(safe-area-inset-bottom,0)}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:6px 14px;border:none;background:none;flex:1;transition:all .15s}
+.nav-icon{font-size:22px;line-height:1;position:relative}
+.nav-lbl{font-size:10px;font-weight:500;color:var(--muted);font-family:inherit}
+.nav-item.active .nav-lbl{color:var(--primary)}
+.nav-item.active .nav-icon{color:var(--primary)}
+.nav-add{background:var(--primary);color:#fff;width:54px;height:54px;border-radius:50%;border:4px solid var(--card);box-shadow:var(--shadow-md);display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;margin-top:-22px;flex-shrink:0;transition:transform .15s}
+.nav-add:active{transform:scale(.93)}
+.sync-pip{position:absolute;top:-3px;right:-3px;width:14px;height:14px;background:var(--amber);border-radius:50%;font-size:8px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+
+/* ─── CARDS ─── */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:12px}
+.card-sm{padding:12px}
+
+/* ─── SUMMARY GRID ─── */
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.sum-card{background:var(--card);border-radius:var(--r);padding:14px;box-shadow:var(--shadow)}
+.sum-card .lbl{font-size:11px;color:var(--muted);margin-bottom:3px}
+.sum-card .val{font-size:19px;font-weight:700;letter-spacing:-.5px}
+.sum-card .sub{font-size:10px;color:var(--muted);margin-top:2px}
+.sum-card.blue{background:linear-gradient(135deg,#1D4ED8,#2563EB)}
+.sum-card.blue .lbl,.sum-card.blue .sub{color:rgba(255,255,255,.75)}
+.sum-card.blue .val{color:#fff}
+.sum-card.green{background:linear-gradient(135deg,#059669,#10B981)}
+.sum-card.green .lbl,.sum-card.green .sub{color:rgba(255,255,255,.75)}
+.sum-card.green .val{color:#fff}
+
+/* ─── PROJECT CHIP ─── */
+.proj-chip{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:var(--r);padding:11px 14px;margin-bottom:12px;box-shadow:var(--shadow);cursor:pointer;border:none;width:100%;text-align:left;font-family:inherit}
+.proj-chip .ico{font-size:22px;flex-shrink:0}
+.proj-chip .info{flex:1;min-width:0}
+.proj-chip .pname{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.proj-chip .psub{font-size:11px;color:var(--muted)}
+.proj-chip .chev{color:var(--muted);font-size:18px;flex-shrink:0}
+
+/* ─── SECTION ─── */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sec-title{font-size:14px;font-weight:700}
+.sec-action{font-size:13px;color:var(--primary);cursor:pointer;background:none;border:none;font-family:inherit;font-weight:500}
+
+/* ─── EXPENSE ITEM ─── */
+.exp-item{display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.exp-item:last-child{border-bottom:none}
+.exp-thumb{width:44px;height:44px;border-radius:9px;background:var(--primary-lt);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;overflow:hidden}
+.exp-thumb img{width:100%;height:100%;object-fit:cover}
+.exp-info{flex:1;min-width:0}
+.exp-cat{font-size:10px;color:var(--muted)}
+.exp-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exp-meta{font-size:11px;color:var(--muted);margin-top:1px}
+.exp-right{text-align:right;flex-shrink:0}
+.exp-amt{font-size:15px;font-weight:700}
+.exp-badge{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--primary-lt);color:var(--primary);margin-top:2px;display:inline-block;font-weight:500}
+.exp-badge.tax{background:var(--amber-lt);color:var(--amber)}
+.exp-badge.receipt{background:var(--green-lt);color:var(--green)}
+
+/* ─── DATE GROUP ─── */
+.date-grp{margin-bottom:14px}
+.date-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:6px 0 2px;border-bottom:1px solid var(--border);margin-bottom:2px}
+
+/* ─── PROGRESS BAR ─── */
+.prog-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px}
+.prog-fill{height:100%;border-radius:3px;background:var(--primary);transition:width .4s}
+.prog-fill.warn{background:var(--amber)}
+.prog-fill.over{background:var(--red)}
+
+/* ─── FORMS ─── */
+.form-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;display:block}
+.form-inp{width:100%;padding:12px 13px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:15px;font-family:inherit;background:#fff;color:var(--text);outline:none;transition:border-color .2s;-webkit-appearance:none}
+.form-inp:focus{border-color:var(--primary)}
+.form-sel{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748B' d='M6 8L0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:36px}
+.form-grp{margin-bottom:13px}
+.form-row{display:flex;gap:9px}
+.form-row .form-grp{flex:1}
+
+/* Amount with prefix */
+.inp-wrap{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:var(--r-sm);background:#fff;overflow:hidden;transition:border-color .2s}
+.inp-wrap:focus-within{border-color:var(--primary)}
+.inp-pfx{padding:0 11px;background:var(--bg);border-right:1.5px solid var(--border);font-size:13px;color:var(--muted);height:46px;display:flex;align-items:center;white-space:nowrap;flex-shrink:0}
+.inp-wrap input{flex:1;border:none;outline:none;padding:12px 13px;font-size:16px;font-family:inherit;background:transparent;min-width:0;font-weight:600}
+
+/* ─── RECEIPT TYPE ─── */
+.rtype-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rtype-btn{padding:11px 8px;border:2px solid var(--border);border-radius:var(--r-sm);background:#fff;text-align:center;cursor:pointer;transition:all .15s;font-family:inherit;width:100%}
+.rtype-btn .ico{font-size:22px;display:block;margin-bottom:4px}
+.rtype-btn .txt{font-size:11px;font-weight:600;color:var(--text);line-height:1.3}
+.rtype-btn.sel{border-color:var(--primary);background:var(--primary-lt)}
+.rtype-btn.sel .txt{color:var(--primary)}
+
+/* ─── VAT / WHT ─── */
+.tax-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
+.tax-lbl{font-size:14px;font-weight:500}
+.tax-sub{font-size:11px;color:var(--muted)}
+.toggle{width:44px;height:24px;border-radius:12px;background:var(--border);border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--primary)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on::after{transform:translateX(20px)}
+.tax-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.tax-sel{width:90px;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:inherit;font-size:13px;background:#fff;-webkit-appearance:none;appearance:none;text-align:center}
+.tax-amt-box{flex:1;padding:9px 13px;background:var(--bg);border-radius:var(--r-sm);font-size:13px;color:var(--muted);font-weight:500}
+
+/* ─── NET AMOUNT BOX ─── */
+.net-box{background:linear-gradient(135deg,#1E40AF,#2563EB);border-radius:var(--r);padding:16px;color:#fff;margin-bottom:16px}
+.net-box .row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;opacity:.85}
+.net-box .sep{border:none;border-top:1px solid rgba(255,255,255,.25);margin:10px 0}
+.net-box .total{display:flex;justify-content:space-between;font-size:20px;font-weight:700}
+
+/* ─── UPLOAD ─── */
+.upload-sect{margin-bottom:14px}
+.upload-btns{display:flex;gap:9px;margin-bottom:10px}
+.upload-btn{flex:1;padding:12px 8px;border-radius:var(--r-sm);font-family:inherit;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;border:1.5px solid;transition:all .15s}
+.upload-btn:active{transform:scale(.97)}
+.upload-btn.cam{border-color:var(--primary);color:var(--primary);background:var(--primary-lt)}
+.upload-btn.gal{border-color:var(--green);color:var(--green);background:var(--green-lt)}
+.prev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.prev-item{aspect-ratio:1;border-radius:var(--r-sm);overflow:hidden;position:relative;background:var(--bg)}
+.prev-item img{width:100%;height:100%;object-fit:cover}
+.prev-rm{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;border:none;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.upload-placeholder{border:2px dashed var(--border);border-radius:var(--r-sm);padding:20px;text-align:center;cursor:pointer;transition:all .15s;background:#fff;font-size:13px;color:var(--muted)}
+.upload-placeholder:active{border-color:var(--primary);background:var(--primary-lt)}
+
+/* ─── BUTTONS ─── */
+.btn-primary{width:100%;padding:15px;background:var(--primary);color:#fff;border:none;border-radius:var(--r);font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
+.btn-primary:active{transform:scale(.98);background:var(--primary-d)}
+.btn-primary:disabled{opacity:.6}
+.btn-ghost{width:100%;padding:13px;background:#fff;color:var(--primary);border:2px solid var(--primary);border-radius:var(--r);font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s}
+.btn-danger{background:var(--red);color:#fff;border:none;border-radius:var(--r-sm);padding:10px 18px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.btn-sm{padding:8px 14px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:#fff;font-family:inherit;font-size:13px;cursor:pointer}
+
+/* ─── TOAST ─── */
+.toast{position:fixed;bottom:calc(var(--nav) + 14px);left:50%;transform:translateX(-50%);background:#1E293B;color:#fff;padding:12px 20px;border-radius:var(--r);font-size:14px;font-weight:500;z-index:9999;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;max-width:92%}
+.toast.show{opacity:1}
+.toast.ok{background:var(--green)}
+.toast.err{background:var(--red)}
+
+/* ─── MODALS ─── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:20px;max-height:85vh;overflow-y:auto;flex-shrink:0}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:14px}
+.modal-list-item{display:flex;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer;gap:12px}
+.modal-list-item:last-child{border-bottom:none}
+.modal-list-item .ico{font-size:22px;width:36px;text-align:center}
+.modal-list-item .info{flex:1}
+.modal-list-item .name{font-size:15px;font-weight:500}
+.modal-list-item .sub{font-size:12px;color:var(--muted)}
+.modal-list-item .chk{color:var(--primary);font-size:18px}
+
+/* ─── SEARCH & CHIPS ─── */
+.search-bar{display:flex;align-items:center;background:#fff;border-radius:var(--r-sm);padding:10px 13px;gap:9px;margin-bottom:11px;box-shadow:var(--shadow);border:1.5px solid var(--border)}
+.search-bar input{flex:1;border:none;outline:none;font-size:14px;font-family:inherit}
+.chips{display:flex;gap:7px;overflow-x:auto;margin-bottom:11px;padding-bottom:3px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-family:inherit;white-space:nowrap;cursor:pointer;transition:all .15s;font-weight:500}
+.chip.on{border-color:var(--primary);background:var(--primary-lt);color:var(--primary)}
+
+/* ─── SETTINGS ─── */
+.set-item{display:flex;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer;gap:12px}
+.set-item:last-child{border-bottom:none}
+.set-ico{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--primary-lt);flex-shrink:0}
+.set-info{flex:1}
+.set-name{font-size:14px;font-weight:500}
+.set-desc{font-size:12px;color:var(--muted);margin-top:1px}
+.set-val{font-size:12px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+
+/* ─── IMG VIEWER ─── */
+.imgv{position:fixed;inset:0;background:#000;z-index:400;display:none;flex-direction:column}
+.imgv.open{display:flex}
+.imgv-hdr{padding:44px 16px 12px;display:flex;align-items:center;justify-content:space-between}
+.imgv-close{color:#fff;background:none;border:none;font-size:30px;cursor:pointer;line-height:1}
+.imgv-title{color:#fff;font-size:14px;font-weight:500}
+.imgv-body{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:16px}
+.imgv-body img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
+
+/* ─── DETAIL MODAL ─── */
+.detail-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:14px}
+.detail-row:last-child{border-bottom:none}
+.detail-lbl{color:var(--muted);flex-shrink:0;margin-right:12px}
+.detail-val{font-weight:500;text-align:right}
+
+/* ─── EMPTY STATE ─── */
+.empty{text-align:center;padding:48px 20px}
+.empty .ico{font-size:52px;margin-bottom:14px}
+.empty .ttl{font-size:17px;font-weight:700;margin-bottom:6px}
+.empty .sub{font-size:14px;color:var(--muted);line-height:1.5}
+
+/* ─── MISC ─── */
+.divider{height:1px;background:var(--border);margin:8px 0}
+.tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.tag.blue{background:var(--primary-lt);color:var(--primary)}
+.tag.green{background:var(--green-lt);color:var(--green)}
+.tag.amber{background:var(--amber-lt);color:var(--amber)}
+.tag.red{background:var(--red-lt);color:var(--red)}
+.spinner{width:22px;height:22px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.offline-bar{background:var(--amber);color:#fff;text-align:center;padding:7px;font-size:12px;font-weight:600;display:none}
+.offline-bar.show{display:block}
+input[type="date"]{color-scheme:light}
+
+/* ─── AMOUNT MODE TOGGLE ─── */
+.amt-mode-row{display:flex;gap:6px;margin-bottom:10px}
+.amt-mode-btn{flex:1;padding:9px 6px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:#fff;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;color:var(--muted);transition:all .15s;line-height:1.3}
+.amt-mode-btn.on{border-color:var(--primary);background:var(--primary-lt);color:var(--primary);font-weight:700}
+.amt-hint{font-size:11px;color:var(--muted);margin-bottom:8px;padding:6px 10px;background:var(--bg);border-radius:6px}
+
+/* ─── EDIT MODE ─── */
+.edit-badge{display:inline-flex;align-items:center;gap:5px;background:var(--amber-lt);color:var(--amber);border:1.5px solid var(--amber);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:10px}
+.btn-edit{background:var(--amber);color:#fff;border:none;border-radius:var(--r-sm);padding:10px 16px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+
+/* ─── DONUT CHART ─── */
+.donut-card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:12px}
+.donut-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+
+/* ─── ACTIVITY CHIP (dashboard) ─── */
+.act-filter-row{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;padding-bottom:2px;scrollbar-width:none}
+.act-filter-row::-webkit-scrollbar{display:none}
+.act-chip{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:11.5px;font-family:inherit;white-space:nowrap;cursor:pointer;transition:all .15s;font-weight:500}
+.act-chip.on{border-color:var(--green);background:var(--green-lt);color:var(--green)}
+
+/* ─── BACKUP CARD ─── */
+.bk-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.bk-item:last-child{border-bottom:none}
+.bk-num{width:28px;height:28px;border-radius:50%;background:var(--primary-lt);color:var(--primary);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bk-info{flex:1;min-width:0}
+.bk-date{font-size:13px;font-weight:600}
+.bk-meta{font-size:11px;color:var(--muted);margin-top:1px}
+.bk-btn{padding:5px 11px;border-radius:6px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;border:none;flex-shrink:0}
+.bk-btn.restore{background:var(--primary-lt);color:var(--primary)}
+.bk-btn.del{background:var(--red-lt);color:var(--red)}
+
+/* ─── LIST FILTERS (expense list) ─── */
+.list-filter-row{display:flex;gap:8px;margin-bottom:6px;align-items:center}
+.filter-sel{flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:inherit;font-size:13px;background:#fff;-webkit-appearance:none;appearance:none;color:var(--text)}
+/* ─── SELECTION MODE ─── */
+.sel-bar{display:flex;align-items:center;gap:8px;background:var(--primary-lt);border:1.5px solid var(--primary);border-radius:var(--r-sm);padding:8px 12px;margin-bottom:8px;animation:fadeUp .15s ease}
+.sel-bar-txt{flex:1;font-size:13px;font-weight:600;color:var(--primary)}
+.sel-bar-btn{padding:5px 12px;border-radius:6px;border:none;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.sel-bar-btn.all{background:var(--primary);color:#fff}
+.sel-bar-btn.clear{background:#fff;color:var(--primary);border:1px solid var(--primary)}
+.sel-bar-btn.pdf{background:var(--red);color:#fff}
+/* Checkbox on each expense item */
+.exp-check{width:22px;height:22px;accent-color:var(--primary);cursor:pointer;flex-shrink:0;pointer-events:none}
+.exp-item.selected{background:var(--primary-lt)}
+
+/* ─── LOGIN OVERLAY ─── */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(160deg,#1D4ED8,#2563EB 60%,#1E40AF);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.login-box{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-logo{text-align:center;font-size:44px;margin-bottom:6px}
+.login-title{text-align:center;font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px}
+.login-sub{text-align:center;font-size:13px;color:var(--muted);margin-bottom:24px}
+.login-err{background:var(--red-lt);color:var(--red);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;display:none;text-align:center}
+.login-btn{width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:var(--r);font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;transition:all .15s}
+.login-btn:active{transform:scale(.98);background:var(--primary-d)}
+.login-btn:disabled{opacity:.6}
+/* ─── USER CHIP (header) ─── */
+.user-chip{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:20px;background:var(--primary-lt);border:none;cursor:pointer;font-family:inherit;flex-shrink:0;max-width:130px}
+.user-name{font-size:12px;font-weight:600;color:var(--primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ─── ROLE BADGE ─── */
+.role-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;display:inline-block;flex-shrink:0}
+.role-badge.admin{background:#FEF2F2;color:var(--red)}
+.role-badge.user{background:var(--green-lt);color:var(--green)}
+/* ─── ADMIN ONLY ─── */
+.admin-only{/* controlled by JS */}
+/* ─── USER MANAGEMENT ─── */
+.user-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.user-row:last-child{border-bottom:none}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:var(--primary-lt);color:var(--primary);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-dname{font-size:14px;font-weight:600}
+.user-meta{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN OVERLAY ═══ -->
+<div id="loginOverlay" class="login-overlay" style="display:none">
+  <div class="login-box">
+    <div class="login-logo">🧾</div>
+    <div class="login-title">ค่าใช้จ่ายโครงการ</div>
+    <div class="login-sub">Field Expense Tracker</div>
+    <div class="login-err" id="loginErr">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</div>
+    <div class="form-grp" style="margin-bottom:12px">
+      <label class="form-lbl">ชื่อผู้ใช้</label>
+      <input type="text" class="form-inp" id="loginUser" placeholder="username" autocomplete="username" autocapitalize="none" oninput="$('loginErr').style.display='none'">
+    </div>
+    <div class="form-grp" style="margin-bottom:16px">
+      <label class="form-lbl">รหัสผ่าน</label>
+      <input type="password" class="form-inp" id="loginPass" placeholder="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" oninput="$('loginErr').style.display='none'">
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">
+      <span id="loginBtnTxt">🔐 เข้าสู่ระบบ</span>
+    </button>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:16px">
+      ติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์เข้าใช้งาน
+    </div>
+    <!-- Script URL toggle -->
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px">
+      <button onclick="toggleLoginUrl()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:inherit;width:100%;text-align:center;padding:4px 0">
+        ⚙️ ตั้งค่า Server URL
+      </button>
+      <div id="loginUrlPanel" style="display:none;margin-top:10px">
+        <label class="form-lbl" style="font-size:11px">Google Apps Script URL</label>
+        <input type="url" class="form-inp" id="loginScriptUrl"
+          placeholder="https://script.google.com/macros/s/.../exec"
+          style="font-size:12px;margin-bottom:8px"
+          oninput="saveLoginUrl()">
+        <div id="loginUrlStatus" style="font-size:11px;color:var(--muted);text-align:center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Offline Bar -->
+<div class="offline-bar" id="offlineBar">⚠️ ออฟไลน์ — รายการจะ sync อัตโนมัติเมื่อออนไลน์</div>
+
+<!-- Header -->
+<header class="hdr">
+  <div class="hdr-logo">🧾</div>
+  <div class="hdr-info" style="flex:1">
+    <div class="hdr-title" id="hdrTitle">ค่าใช้จ่ายโครงการ</div>
+    <div class="hdr-sub" id="hdrSub"><span class="conn-dot" id="connDot"></span><span id="connLbl">กำลังเชื่อมต่อ...</span></div>
+  </div>
+  <button class="hdr-btn" id="btnPush" onclick="pushNow()" title="บันทึก/Push ขึ้น Sheet" style="position:relative">⬆️<span id="pendingBadge" style="position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border-radius:50%;font-size:9px;width:14px;height:14px;display:none;align-items:center;justify-content:center;font-weight:700"></span></button>
+  <button class="hdr-btn" id="btnPull" onclick="pullNow()" title="ดึงข้อมูลจาก Sheet">⬇️</button>
+  <button class="hdr-btn" onclick="showView('settings')" title="ตั้งค่า">⚙️</button>
+  <button class="user-chip" id="userChip" onclick="doLogout()" title="ออกจากระบบ" style="display:none">
+    <span class="user-name" id="userChipName">-</span>
+    <span class="role-badge" id="userChipRole">user</span>
+  </button>
+</header>
+
+<!-- Main -->
+<main class="main">
+
+<!-- ═══════════ VIEW: DASHBOARD ═══════════ -->
+<section class="view active" id="view-dashboard">
+  <button class="proj-chip" onclick="openModal('modalProject')" id="projChip">
+    <span class="ico">📁</span>
+    <div class="info">
+      <div class="pname" id="projName">เลือกโครงการ</div>
+      <div class="psub" id="projSub">แตะเพื่อเลือกโครงการ</div>
+    </div>
+    <span class="chev">›</span>
+  </button>
+
+  <!-- Activity filter chips (แสดงเมื่อเลือกโครงการ) -->
+  <div class="act-filter-row" id="dashActRow" style="display:none"></div>
+
+  <div class="sum-grid">
+    <div class="sum-card blue">
+      <div class="lbl">ยอดรวมทั้งหมด</div>
+      <div class="val" id="sumTotal">฿0</div>
+      <div class="sub" id="sumCount">0 รายการ</div>
+    </div>
+    <div class="sum-card green">
+      <div class="lbl">ยอดสุทธิ</div>
+      <div class="val" id="sumNet">฿0</div>
+      <div class="sub">หลังหัก WHT</div>
+    </div>
+    <div class="sum-card">
+      <div class="lbl">VAT ทั้งหมด</div>
+      <div class="val" id="sumVat" style="color:var(--amber)">฿0</div>
+      <div class="sub">ภาษีมูลค่าเพิ่ม</div>
+    </div>
+    <div class="sum-card">
+      <div class="lbl">หัก ณ ที่จ่าย</div>
+      <div class="val" id="sumWHT" style="color:var(--red)">฿0</div>
+      <div class="sub">ภาษีหัก ณ ที่จ่าย</div>
+    </div>
+  </div>
+
+  <div class="card card-sm" id="budgetCard" style="display:none">
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+      <span id="budgetLbl" style="font-weight:600">งบประมาณโครงการ</span>
+      <span id="budgetPct" style="font-weight:700;color:var(--primary)">0%</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="budgetFill" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px">
+      <span id="budgetUsed">ใช้ไป ฿0</span>
+      <span id="budgetLeft">คงเหลือ ฿0</span>
+    </div>
+  </div>
+
+  <!-- Donut Chart -->
+  <div class="donut-card" id="donutCard">
+    <div class="donut-title">
+      <span>📊 สัดส่วนค่าใช้จ่าย</span>
+      <select id="donutGroupSel" class="filter-sel" style="width:auto;padding:4px 8px;font-size:12px" onchange="renderDashboard()">
+        <option value="l1">หมวดหลัก</option>
+        <option value="l2">หมวดรอง</option>
+        <option value="project">โครงการ</option>
+      </select>
+    </div>
+    <div id="donutWrap"></div>
+  </div>
+
+  <div class="sec-hdr">
+    <span class="sec-title">รายการล่าสุด</span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="sec-action" style="background:var(--red-lt);color:var(--red);padding:5px 11px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--red)" onclick="exportPDF()">📄 PDF</button>
+      <button class="sec-action" onclick="showView('expenses')">ดูทั้งหมด</button>
+    </div>
+  </div>
+  <div class="card card-sm" id="recentList">
+    <div class="empty" style="padding:24px 0">
+      <div class="ico">📋</div>
+      <div class="ttl" style="font-size:14px">ยังไม่มีรายการ</div>
+      <div class="sub" style="font-size:12px">กดปุ่ม + เพื่อเพิ่มค่าใช้จ่าย</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ VIEW: ADD EXPENSE ═══════════ -->
+<section class="view" id="view-add">
+  <div class="card">
+    <div id="formEditBadge" class="edit-badge" style="display:none">✏️ แก้ไขรายการ</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:14px" id="formTitle">📝 บันทึกค่าใช้จ่าย</div>
+
+    <!-- Date & Project -->
+    <div class="form-row">
+      <div class="form-grp">
+        <label class="form-lbl">วันที่</label>
+        <input type="date" class="form-inp" id="fDate">
+      </div>
+      <div class="form-grp">
+        <label class="form-lbl">ประเภทเอกสาร</label>
+        <select class="form-inp form-sel" id="fDocType">
+          <option value="ใบรับเงิน">ใบรับเงิน</option>
+          <option value="ใบกำกับภาษี">ใบกำกับภาษี</option>
+          <option value="ใบเสร็จรับเงิน">ใบเสร็จรับเงิน</option>
+          <option value="ใบสำคัญจ่าย">ใบสำคัญจ่าย</option>
+          <option value="อื่นๆ">อื่นๆ</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Project & Activity -->
+    <div class="form-grp">
+      <label class="form-lbl">โครงการ <span style="color:var(--red)">*</span></label>
+      <select class="form-inp form-sel" id="fProject" onchange="onProjectChange()">
+        <option value="">— เลือกโครงการ —</option>
+      </select>
+    </div>
+    <div class="form-grp">
+      <label class="form-lbl">กิจกรรม <span style="color:var(--red)">*</span></label>
+      <select class="form-inp form-sel" id="fActivity">
+        <option value="">— เลือกกิจกรรม —</option>
+      </select>
+    </div>
+
+    <!-- Category Cascade -->
+    <div class="form-grp">
+      <label class="form-lbl">ประเภทค่าใช้จ่ายหลัก <span style="color:var(--red)">*</span></label>
+      <select class="form-inp form-sel" id="fCatL1" onchange="onCatL1Change()">
+        <option value="">— เลือกประเภทหลัก —</option>
+      </select>
+    </div>
+    <div class="form-grp">
+      <label class="form-lbl">ประเภทค่าใช้จ่าย</label>
+      <select class="form-inp form-sel" id="fCatL2" onchange="onCatL2Change()">
+        <option value="">— เลือก —</option>
+      </select>
+    </div>
+    <div class="form-grp">
+      <label class="form-lbl">รายการ</label>
+      <select class="form-inp form-sel" id="fCatL3">
+        <option value="">— เลือก —</option>
+      </select>
+    </div>
+
+    <!-- Description -->
+    <div class="form-grp">
+      <label class="form-lbl">รายละเอียด / รายการ</label>
+      <input type="text" class="form-inp" id="fDesc" placeholder="เช่น ค่าน้ำมันรถยนต์ กรุงเทพ-ระนอง">
+    </div>
+
+    <!-- Amount (กรอกก่อน) -->
+    <div class="form-grp">
+      <label class="form-lbl">จำนวนเงิน (บาท)</label>
+      <div class="inp-wrap">
+        <span class="inp-pfx">฿</span>
+        <input type="number" id="fAmount" placeholder="0.00" step="0.01" min="0" oninput="calcTax()">
+      </div>
+    </div>
+
+    <!-- Mode Toggle (เลือกหลังกรอกเงิน) -->
+    <div class="form-grp">
+      <label class="form-lbl">ยอดข้างต้นคือ</label>
+      <div class="amt-mode-row">
+        <button class="amt-mode-btn on" id="amtModeBefore" onclick="setAmountMode('before',this)">
+          ยอดก่อนภาษี<br><span style="font-size:10px;opacity:.75">ระบบจะบวก VAT / หัก WHT ให้</span>
+        </button>
+        <button class="amt-mode-btn" id="amtModeInclusive" onclick="setAmountMode('inclusive',this)">
+          ยอดรวม VAT แล้ว<br><span style="font-size:10px;opacity:.75">ระบบจะถอย VAT ออก แล้วหัก WHT</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Payment Method -->
+    <div class="form-grp">
+      <label class="form-lbl">วิธีชำระเงิน</label>
+      <select class="form-inp form-sel" id="fPayment">
+        <option value="โอนเงิน">โอนเงิน</option>
+        <option value="เงินสด">เงินสด</option>
+        <option value="บัตรเครดิต">บัตรเครดิต</option>
+        <option value="เช็ค">เช็ค</option>
+        <option value="อื่นๆ">อื่นๆ</option>
+      </select>
+    </div>
+
+    <!-- Payer -->
+    <div class="form-grp">
+      <label class="form-lbl">ผู้จ่ายเงิน <span style="color:var(--muted);font-weight:400">(ชื่อผู้สำรองจ่าย)</span></label>
+      <select class="form-inp form-sel" id="fPayer"></select>
+    </div>
+  </div>
+
+  <!-- VAT & WHT Card -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:700;margin-bottom:8px">🧮 ภาษี</div>
+
+    <!-- VAT -->
+    <div class="tax-toggle-row">
+      <div>
+        <div class="tax-lbl">ภาษีมูลค่าเพิ่ม (VAT)</div>
+        <div class="tax-sub">มีการออก VAT หรือไม่?</div>
+      </div>
+      <button class="toggle" id="vatToggle" onclick="toggleVAT()"></button>
+    </div>
+    <div id="vatFields" style="display:none">
+      <div class="tax-row">
+        <select class="tax-sel form-sel" id="fVatRate" onchange="calcTax()">
+          <option value="7">7%</option>
+          <option value="0">0%</option>
+        </select>
+        <div class="tax-amt-box">VAT = <span id="vatAmtShow">฿0.00</span></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- WHT -->
+    <div class="tax-toggle-row">
+      <div>
+        <div class="tax-lbl">หัก ณ ที่จ่าย (WHT)</div>
+        <div class="tax-sub">มีการหัก ณ ที่จ่ายหรือไม่?</div>
+      </div>
+      <button class="toggle" id="whtToggle" onclick="toggleWHT()"></button>
+    </div>
+    <div id="whtFields" style="display:none">
+      <div class="tax-row">
+        <select class="tax-sel form-sel" id="fWhtRate" onchange="calcTax()">
+          <option value="3">3%</option>
+          <option value="1">1%</option>
+          <option value="5">5%</option>
+          <option value="10">10%</option>
+          <option value="15">15%</option>
+        </select>
+        <div class="tax-amt-box">WHT = <span id="whtAmtShow">฿0.00</span></div>
+      </div>
+    </div>
+
+    <!-- Net Amount -->
+    <div class="net-box" style="margin-top:14px">
+      <div class="row" id="netInputRow" style="display:none"><span>ยอดที่กรอก (รวม VAT)</span><span id="netInputAmt">฿0.00</span></div>
+      <div class="row"><span id="netBaseLabel">ยอดก่อนภาษี</span><span id="netBase">฿0.00</span></div>
+      <div class="row"><span>+ VAT</span><span id="netVat">฿0.00</span></div>
+      <div class="row"><span>- หัก ณ ที่จ่าย</span><span id="netWht">฿0.00</span></div>
+      <hr class="sep">
+      <div class="total"><span>ยอดสุทธิ</span><span id="netTotal">฿0.00</span></div>
+    </div>
+  </div>
+
+  <!-- Image Uploads Card -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px">📸 หลักฐานการชำระเงิน</div>
+
+    <label class="form-lbl">สลิปการโอนเงิน</label>
+    <div class="upload-btns">
+      <button class="upload-btn cam" onclick="triggerCapture('slipCam')">📷 ถ่ายภาพ</button>
+      <button class="upload-btn gal" onclick="triggerFile('slipFile')">🖼️ จากคลัง</button>
+    </div>
+    <input type="file" id="slipCam" accept="image/*" capture="environment" style="display:none" onchange="handleImages(this,'slip')">
+    <input type="file" id="slipFile" accept="image/*" multiple style="display:none" onchange="handleImages(this,'slip')">
+    <div class="prev-grid" id="slipPrev"></div>
+    <div id="slipEmpty" class="upload-placeholder" onclick="triggerFile('slipFile')">
+      📎 แตะเพื่อเพิ่มสลิป
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px">🧾 ใบเสร็จ / ใบกำกับภาษี</div>
+
+    <label class="form-lbl">ถ่ายหรืออัปโหลดใบเสร็จ</label>
+    <div class="upload-btns">
+      <button class="upload-btn cam" onclick="triggerCapture('rcptCam')">📷 ถ่ายภาพ</button>
+      <button class="upload-btn gal" onclick="triggerFile('rcptFile')">🖼️ จากคลัง</button>
+    </div>
+    <input type="file" id="rcptCam" accept="image/*" capture="environment" style="display:none" onchange="handleImages(this,'rcpt')">
+    <input type="file" id="rcptFile" accept="image/*" multiple style="display:none" onchange="handleImages(this,'rcpt')">
+    <div class="prev-grid" id="rcptPrev"></div>
+    <div id="rcptEmpty" class="upload-placeholder" onclick="triggerFile('rcptFile')">
+      📎 แตะเพื่อเพิ่มใบเสร็จ
+    </div>
+  </div>
+
+  <!-- Note -->
+  <div class="card">
+    <div class="form-grp" style="margin-bottom:0">
+      <label class="form-lbl">หมายเหตุ (ถ้ามี)</label>
+      <textarea class="form-inp" id="fNote" rows="2" placeholder="บันทึกเพิ่มเติม..." style="resize:none"></textarea>
+    </div>
+  </div>
+
+  <button class="btn-primary" id="saveBtn" onclick="saveExpense()">
+    <span id="saveBtnTxt">💾 บันทึกรายการ</span>
+  </button>
+  <div style="height:8px"></div>
+</section>
+
+<!-- ═══════════ VIEW: EXPENSES LIST ═══════════ -->
+<section class="view" id="view-expenses">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px">
+    <div class="search-bar" style="flex:1;margin-bottom:0">
+      <span>🔍</span>
+      <input type="text" id="searchInp" placeholder="ค้นหารายการ..." oninput="renderExpenseList()">
+    </div>
+    <button onclick="exportPDF()" style="flex-shrink:0;padding:10px 14px;background:var(--red);color:#fff;border:none;border-radius:var(--r-sm);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap">📄 PDF</button>
+  </div>
+  <!-- Row 1: โครงการ + กิจกรรม -->
+  <div class="list-filter-row">
+    <select id="listProjSel" class="filter-sel" onchange="onListProjectChange()">
+      <option value="">📁 ทุกโครงการ</option>
+    </select>
+    <select id="listActSel" class="filter-sel" onchange="renderExpenseList()">
+      <option value="">📋 ทุกกิจกรรม</option>
+    </select>
+  </div>
+  <!-- Row 2: หมวดหลัก + หมวดย่อย -->
+  <div class="list-filter-row">
+    <select id="listCatL1" class="filter-sel" onchange="onListCatL1Change()">
+      <option value="">🗂 ทุกหมวดหลัก</option>
+    </select>
+    <select id="listCatL2" class="filter-sel" onchange="renderExpenseList()">
+      <option value="">📂 ทุกหมวดย่อย</option>
+    </select>
+  </div>
+  <!-- Row 3: ผู้จ่าย -->
+  <div class="list-filter-row">
+    <select id="listPayerSel" class="filter-sel" onchange="renderExpenseList()">
+      <option value="">👤 ทุกผู้จ่าย</option>
+    </select>
+  </div>
+  <!-- Selection bar (แสดงเมื่อ selectMode = true) -->
+  <div id="selBar" class="sel-bar" style="display:none">
+    <span class="sel-bar-txt" id="selCount">เลือก 0 รายการ</span>
+    <button class="sel-bar-btn all" onclick="selectAllVisible()">ทั้งหมด</button>
+    <button class="sel-bar-btn clear" onclick="clearSelection()">ยกเลิก</button>
+    <button class="sel-bar-btn pdf" onclick="exportPDF(true)">📄 PDF</button>
+  </div>
+  <div class="chips" id="filterChips">
+    <button class="chip on" onclick="setFilter('all',this)">ทั้งหมด</button>
+    <button class="chip" onclick="setFilter('ใบรับเงิน',this)">ใบรับเงิน</button>
+    <button class="chip" onclick="setFilter('ใบกำกับภาษี',this)">ใบกำกับภาษี</button>
+    <button class="chip" onclick="setFilter('ใบเสร็จรับเงิน',this)">ใบเสร็จ</button>
+    <button class="chip" onclick="toggleSelectMode(this)" id="selModeBtn" style="margin-left:auto">☑️ เลือก</button>
+  </div>
+  <div id="expenseList"></div>
+</section>
+
+<!-- ═══════════ VIEW: SETTINGS ═══════════ -->
+<section class="view" id="view-settings">
+  <div class="card">
+    <div style="font-size:16px;font-weight:700;margin-bottom:14px">⚙️ ตั้งค่า</div>
+
+    <!-- Script URL -->
+    <div class="form-grp">
+      <label class="form-lbl">Google Apps Script URL</label>
+      <input type="url" class="form-inp" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:13px">
+    </div>
+    <div style="display:flex;gap:9px;margin-bottom:14px">
+      <button class="btn-ghost" style="flex:1;padding:11px" onclick="testConnection()">🔗 ทดสอบ</button>
+      <button class="btn-primary" style="flex:1;padding:11px" onclick="saveConfig()">บันทึก</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="font-size:14px;font-weight:700;margin:12px 0 10px">การจัดการข้อมูล</div>
+    <div class="set-item admin-only" id="settingsSetupSheets" style="display:none" onclick="setupSheets()">
+      <div class="set-ico">🏗️</div>
+      <div class="set-info">
+        <div class="set-name">สร้าง Sheet โครงสร้าง</div>
+        <div class="set-desc">สร้าง Sheets tabs ทั้งหมดอัตโนมัติ</div>
+      </div>
+      <span>›</span>
+    </div>
+    <div class="set-item" onclick="syncData()">
+      <div class="set-ico">🔄</div>
+      <div class="set-info">
+        <div class="set-name">ซิงค์ข้อมูลจาก Sheet</div>
+        <div class="set-desc">โหลดโครงการ กิจกรรม หมวดหมู่</div>
+      </div>
+      <span>›</span>
+    </div>
+    <div class="set-item admin-only" id="settingsProjMgmt" style="display:none" onclick="openModal('modalAddProject')">
+      <div class="set-ico">📁</div>
+      <div class="set-info">
+        <div class="set-name">จัดการโครงการ</div>
+        <div class="set-desc" id="projCount">0 โครงการ</div>
+      </div>
+      <span>›</span>
+    </div>
+    <div class="set-item admin-only" id="settingsActMgmt" style="display:none" onclick="openModal('modalAddActivity')">
+      <div class="set-ico">📋</div>
+      <div class="set-info">
+        <div class="set-name">จัดการกิจกรรม</div>
+        <div class="set-desc" id="actCount">0 กิจกรรม</div>
+      </div>
+      <span>›</span>
+    </div>
+    <div class="set-item admin-only" id="settingsCatMgmt" style="display:none" onclick="openModal('modalCategories')">
+      <div class="set-ico" style="background:#F0FDF4">🏷️</div>
+      <div class="set-info">
+        <div class="set-name">หมวดหมู่ค่าใช้จ่าย</div>
+        <div class="set-desc" id="catCount">0 รายการ</div>
+      </div>
+      <span>›</span>
+    </div>
+    <div class="set-item admin-only" id="settingsUserMgmt" style="display:none" onclick="openModal('modalUsers')">
+      <div class="set-ico" style="background:#FEF2F2">👥</div>
+      <div class="set-info">
+        <div class="set-name">จัดการผู้ใช้งาน</div>
+        <div class="set-desc" id="userCount">— ผู้ใช้</div>
+      </div>
+      <span>›</span>
+    </div>
+    <div class="set-item admin-only" id="settingsPurge" style="display:none" onclick="openPurgeDialog()">
+      <div class="set-ico" style="background:#FFF7ED">🧹</div>
+      <div class="set-info">
+        <div class="set-name" style="color:var(--amber,#D97706)">ล้างรายการที่ลบแล้ว</div>
+        <div class="set-desc" id="purgeDesc">ลบถาวรรายการที่ถูก soft-delete ออกจาก Sheet</div>
+      </div>
+      <span>›</span>
+    </div>
+    <div class="set-item" onclick="clearLocalData()">
+      <div class="set-ico" style="background:var(--red-lt)">🗑️</div>
+      <div class="set-info">
+        <div class="set-name" style="color:var(--red)">ล้างข้อมูลในเครื่อง</div>
+        <div class="set-desc">ลบ cache ทั้งหมด (ข้อมูลใน Sheet ยังอยู่)</div>
+      </div>
+      <span>›</span>
+    </div>
+  </div>
+
+  <!-- ═══ BACKUP CARD (admin only) ═══ -->
+  <div class="card admin-only" id="backupCardSection" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="font-size:14px;font-weight:700">☁️ สำรองข้อมูล</div>
+      <button onclick="renderBackupList()" style="background:none;border:none;color:var(--primary);font-size:13px;cursor:pointer;font-family:inherit;padding:4px 6px">🔄 รีเฟรช</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px">บันทึกไป Google Drive · ใช้ข้ามเครื่องได้ · สูงสุด 3 Backup</div>
+    <button class="btn-primary" style="width:100%;margin-bottom:14px" onclick="createBackup()">☁️ สำรองข้อมูลตอนนี้</button>
+    <div id="backupList">
+      <div style="font-size:13px;color:var(--muted);text-align:center;padding:8px 0">ยังไม่มี Backup</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px">📖 คู่มือการตั้งค่า</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.8">
+      1. เปิด <strong>Google Sheets</strong> สร้าง Spreadsheet ใหม่<br>
+      2. เปิด <strong>Extensions → Apps Script</strong><br>
+      3. วาง Code จากไฟล์ <code>google_apps_script.gs</code><br>
+      4. Deploy → <strong>New deployment</strong> → Web App<br>
+      5. Execute as: <strong>Me</strong>, Access: <strong>Anyone</strong><br>
+      6. Copy URL มาวางด้านบน แล้วกด "สร้าง Sheet โครงสร้าง"
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:12px;color:var(--muted);font-size:12px">
+    Field Expense Tracker v1.0 · Built for mobile use
+  </div>
+</section>
+
+</main>
+
+<!-- Bottom Nav -->
+<nav class="nav">
+  <button class="nav-item active" id="nav-dashboard" onclick="showView('dashboard')">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-lbl">หน้าหลัก</span>
+  </button>
+  <button class="nav-item" id="nav-expenses" onclick="showView('expenses')">
+    <span class="nav-icon">📋
+      <span class="sync-pip" id="syncPip" style="display:none">!</span>
+    </span>
+    <span class="nav-lbl">รายการ</span>
+  </button>
+  <button class="nav-add" onclick="openAddForm()">＋</button>
+  <button class="nav-item" id="nav-add" style="display:none"></button>
+  <button class="nav-item" id="nav-settings" onclick="showView('settings')">
+    <span class="nav-icon">⚙️</span>
+    <span class="nav-lbl">ตั้งค่า</span>
+  </button>
+</nav>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══ MODAL: Project Picker ═══ -->
+<div class="modal-bg" id="modalProject" onclick="closeModal('modalProject')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">เลือกโครงการ</div>
+    <div id="modalProjList"></div>
+    <button class="btn-ghost" style="margin-top:12px" onclick="closeModal('modalProject');openModal('modalAddProject')">+ เพิ่มโครงการใหม่</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Add Project ═══ -->
+<div class="modal-bg" id="modalAddProject" onclick="closeModal('modalAddProject')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">โครงการ</div>
+    <div id="projList" style="margin-bottom:14px"></div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:10px" id="projFormTitle">เพิ่มโครงการใหม่</div>
+    <div class="form-grp">
+      <label class="form-lbl">ชื่อโครงการ</label>
+      <input type="text" class="form-inp" id="newProjName" placeholder="ชื่อโครงการ...">
+    </div>
+    <div class="form-row">
+      <div class="form-grp">
+        <label class="form-lbl">รหัส</label>
+        <input type="text" class="form-inp" id="newProjCode" placeholder="เช่น PRJ001">
+      </div>
+      <div class="form-grp">
+        <label class="form-lbl">งบประมาณ (บาท)</label>
+        <input type="number" class="form-inp" id="newProjBudget" placeholder="0">
+      </div>
+    </div>
+    <div id="projCancelRow" style="display:none;margin-bottom:8px">
+      <button class="btn-ghost" style="width:100%" onclick="cancelEditProject()">✕ ยกเลิกการแก้ไข</button>
+    </div>
+    <button class="btn-primary" id="projSaveBtn" onclick="saveProject()">เพิ่มโครงการ</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Add Activity ═══ -->
+<div class="modal-bg" id="modalAddActivity" onclick="closeModal('modalAddActivity')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">กิจกรรม</div>
+    <div id="actList" style="margin-bottom:14px"></div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:10px" id="actFormTitle">เพิ่มกิจกรรมใหม่</div>
+    <div class="form-grp">
+      <label class="form-lbl">โครงการ</label>
+      <select class="form-inp form-sel" id="newActProject">
+        <option value="">— เลือกโครงการ —</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px">
+      <div class="form-grp" style="width:90px;flex-shrink:0">
+        <label class="form-lbl">รหัส (เช่น ACT001)</label>
+        <input type="text" class="form-inp" id="newActCode" placeholder="ACT001" style="text-transform:uppercase">
+      </div>
+      <div class="form-grp" style="flex:1">
+        <label class="form-lbl">ชื่อกิจกรรม</label>
+        <input type="text" class="form-inp" id="newActName" placeholder="ชื่อกิจกรรม...">
+      </div>
+    </div>
+    <div class="form-grp">
+      <label class="form-lbl">งบประมาณ (บาท)</label>
+      <input type="number" class="form-inp" id="newActBudget" placeholder="0">
+    </div>
+    <div id="actCancelRow" style="display:none;margin-bottom:8px">
+      <button class="btn-ghost" style="width:100%" onclick="cancelEditActivity()">✕ ยกเลิกการแก้ไข</button>
+    </div>
+    <button class="btn-primary" id="actSaveBtn" onclick="saveActivity()">เพิ่มกิจกรรม</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Categories (Admin CRUD) ═══ -->
+<div class="modal-bg" id="modalCategories" onclick="closeModal('modalCategories')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:88vh;display:flex;flex-direction:column">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-shrink:0">
+      <div class="modal-title" style="margin-bottom:0">🏷️ หมวดหมู่ค่าใช้จ่าย</div>
+      <span id="catCountBadge" style="font-size:11px;color:var(--muted)"></span>
+    </div>
+    <!-- รายการหมวดหมู่ -->
+    <div id="catModalList" style="flex:1;overflow-y:auto;margin-bottom:12px"></div>
+    <!-- ฟอร์มเพิ่มหมวดหมู่ใหม่ -->
+    <div style="border-top:1px solid var(--border);padding-top:12px;flex-shrink:0">
+      <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">➕ เพิ่มหมวดหมู่</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+        <input type="text" id="newCatL1" class="form-inp" placeholder="หมวดหลัก (L1)" style="font-size:12px;padding:8px 10px">
+        <input type="text" id="newCatL2" class="form-inp" placeholder="หมวดรอง (L2)" style="font-size:12px;padding:8px 10px">
+      </div>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="newCatL3" class="form-inp" placeholder="รายละเอียด (L3) — ไม่บังคับ" style="font-size:12px;padding:8px 10px;flex:1">
+        <button onclick="addCategory()" style="background:var(--primary);color:#fff;border:none;border-radius:var(--r-sm);padding:8px 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">บันทึก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Purge Deleted ═══ -->
+<div class="modal-bg" id="modalPurge" onclick="closeModal('modalPurge')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🧹 ล้างรายการที่ลบแล้ว</div>
+    <div id="purgeInfo" style="font-size:13px;color:var(--text);margin-bottom:14px;line-height:1.7"></div>
+    <div class="form-grp" style="margin-bottom:14px">
+      <label class="form-lbl">ลบรายการที่ถูก soft-delete นานกว่า (วัน)</label>
+      <select class="form-inp form-sel" id="purgeDays">
+        <option value="30">30 วัน</option>
+        <option value="60">60 วัน</option>
+        <option value="90" selected>90 วัน (แนะนำ)</option>
+        <option value="180">180 วัน</option>
+        <option value="0">ทั้งหมดที่ถูกลบ (ไม่จำกัดอายุ)</option>
+      </select>
+    </div>
+    <div style="background:#FEF2F2;border-radius:8px;padding:10px 12px;font-size:12px;color:var(--red);margin-bottom:16px">
+      ⚠️ การลบถาวรไม่สามารถกู้คืนได้ แนะนำ Backup ก่อนเสมอ
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost" style="flex:1" onclick="closeModal('modalPurge')">ยกเลิก</button>
+      <button id="purgeConfirmBtn" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:var(--r-sm);padding:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer" onclick="executePurge()">
+        🗑️ ลบถาวร
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Expense Detail ═══ -->
+<div class="modal-bg" id="modalDetail" onclick="closeModal('modalDetail')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="modal-title" style="margin-bottom:0">รายละเอียด</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-edit" onclick="editExpense(currentDetailId)">✏️ แก้ไข</button>
+        <button class="btn-danger" onclick="deleteExpense(currentDetailId)">ลบ</button>
+      </div>
+    </div>
+    <div id="detailContent"></div>
+    <div id="detailImages" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Manage Users (admin only) ═══ -->
+<div class="modal-bg" id="modalUsers" onclick="closeModal('modalUsers')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">👥 จัดการผู้ใช้งาน</div>
+    <div id="userList" style="margin-bottom:16px"></div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:10px">เพิ่มผู้ใช้ใหม่</div>
+    <div class="form-row">
+      <div class="form-grp">
+        <label class="form-lbl">Username</label>
+        <input type="text" class="form-inp" id="newUserName" placeholder="username" autocapitalize="none">
+      </div>
+      <div class="form-grp">
+        <label class="form-lbl">ชื่อที่แสดง</label>
+        <input type="text" class="form-inp" id="newUserDisplay" placeholder="ชื่อ-นามสกุล">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-grp">
+        <label class="form-lbl">รหัสผ่าน</label>
+        <input type="text" class="form-inp" id="newUserPass" placeholder="password">
+      </div>
+      <div class="form-grp">
+        <label class="form-lbl">บทบาท</label>
+        <select class="form-inp form-sel" id="newUserRole">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="addUser()">+ เพิ่มผู้ใช้</button>
+  </div>
+</div>
+
+<!-- Image Viewer -->
+<div class="imgv" id="imgViewer">
+  <div class="imgv-hdr">
+    <span class="imgv-title" id="imgvTitle">ดูรูปภาพ</span>
+    <button class="imgv-close" onclick="closeImgViewer()">✕</button>
+  </div>
+  <div class="imgv-body">
+    <img id="imgvImg" src="" alt="">
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════
+//  DEFAULT CATEGORIES
+// ══════════════════════════════
+const DEFAULT_CATS = [
+  {l1:'ค่าตอบแทน',l2:'ค่าตอบแทนวิทยากร',l3:'วิทยากรภายนอก'},
+  {l1:'ค่าตอบแทน',l2:'ค่าตอบแทนวิทยากร',l3:'วิทยากรภายใน'},
+  {l1:'ค่าตอบแทน',l2:'ค่าตอบแทนผู้เชี่ยวชาญ',l3:'ที่ปรึกษาโครงการ'},
+  {l1:'ค่าตอบแทน',l2:'ค่าตอบแทนผู้เชี่ยวชาญ',l3:'ผู้เชี่ยวชาญเฉพาะด้าน'},
+  {l1:'ค่าตอบแทน',l2:'ค่าตอบแทนเจ้าหน้าที่',l3:'เจ้าหน้าที่โครงการ'},
+  {l1:'ค่าตอบแทน',l2:'ค่าตอบแทนเจ้าหน้าที่',l3:'ผู้ช่วยนักวิจัย'},
+  {l1:'ค่าตอบแทน',l2:'ค่าตอบแทนเจ้าหน้าที่',l3:'พนักงานชั่วคราว'},
+  {l1:'ค่าใช้สอย',l2:'ค่าพาหนะ',l3:'ค่าน้ำมันเชื้อเพลิง'},
+  {l1:'ค่าใช้สอย',l2:'ค่าพาหนะ',l3:'ค่าเช่ารถยนต์'},
+  {l1:'ค่าใช้สอย',l2:'ค่าพาหนะ',l3:'ค่าตั๋วโดยสารสาธารณะ'},
+  {l1:'ค่าใช้สอย',l2:'ค่าพาหนะ',l3:'ค่าตั๋วเครื่องบิน'},
+  {l1:'ค่าใช้สอย',l2:'ค่าพาหนะ',l3:'ค่าผ่านทาง/จอดรถ'},
+  {l1:'ค่าใช้สอย',l2:'ค่าที่พัก',l3:'ค่าโรงแรม/เกสต์เฮาส์'},
+  {l1:'ค่าใช้สอย',l2:'ค่าที่พัก',l3:'ค่าเช่าที่พักระยะสั้น'},
+  {l1:'ค่าใช้สอย',l2:'ค่าอาหาร',l3:'อาหารกลางวัน'},
+  {l1:'ค่าใช้สอย',l2:'ค่าอาหาร',l3:'อาหารเย็น'},
+  {l1:'ค่าใช้สอย',l2:'ค่าอาหาร',l3:'อาหารว่างและเครื่องดื่ม'},
+  {l1:'ค่าใช้สอย',l2:'ค่าอาหาร',l3:'อาหารสำหรับผู้ร่วมงาน'},
+  {l1:'ค่าใช้สอย',l2:'ค่าจ้างเหมา',l3:'ค่าจ้างเหมาบริการ'},
+  {l1:'ค่าใช้สอย',l2:'ค่าจ้างเหมา',l3:'ค่าจ้างแรงงานชั่วคราว'},
+  {l1:'ค่าใช้สอย',l2:'ค่าจ้างเหมา',l3:'ค่าจ้างเก็บข้อมูลภาคสนาม'},
+  {l1:'ค่าใช้สอย',l2:'ค่าจัดประชุม/สัมมนา',l3:'ค่าเช่าห้องประชุม'},
+  {l1:'ค่าใช้สอย',l2:'ค่าจัดประชุม/สัมมนา',l3:'ค่าจัดนิทรรศการ'},
+  {l1:'ค่าใช้สอย',l2:'ค่าถ่ายเอกสาร/พิมพ์',l3:'ค่าถ่ายเอกสาร'},
+  {l1:'ค่าใช้สอย',l2:'ค่าถ่ายเอกสาร/พิมพ์',l3:'ค่าพิมพ์รายงาน'},
+  {l1:'ค่าวัสดุ',l2:'วัสดุสำนักงาน',l3:'กระดาษ/เครื่องเขียน'},
+  {l1:'ค่าวัสดุ',l2:'วัสดุสำนักงาน',l3:'อุปกรณ์สำนักงาน'},
+  {l1:'ค่าวัสดุ',l2:'วัสดุคอมพิวเตอร์',l3:'อุปกรณ์ IT'},
+  {l1:'ค่าวัสดุ',l2:'วัสดุคอมพิวเตอร์',l3:'Software/License'},
+  {l1:'ค่าวัสดุ',l2:'วัสดุงานสนาม',l3:'อุปกรณ์ภาคสนาม'},
+  {l1:'ค่าวัสดุ',l2:'วัสดุงานสนาม',l3:'เครื่องมือวัด/ทดสอบ'},
+  {l1:'ค่าวัสดุ',l2:'วัสดุงานสนาม',l3:'วัสดุสิ้นเปลือง'},
+  {l1:'ค่าสาธารณูปโภค',l2:'ค่าโทรศัพท์/สื่อสาร',l3:'ค่าโทรศัพท์มือถือ'},
+  {l1:'ค่าสาธารณูปโภค',l2:'ค่าโทรศัพท์/สื่อสาร',l3:'ค่า Internet/Data'},
+  {l1:'ค่าสาธารณูปโภค',l2:'ค่าไฟฟ้า',l3:'ค่าไฟฟ้า'},
+  {l1:'ค่าสาธารณูปโภค',l2:'ค่าน้ำประปา',l3:'ค่าน้ำประปา'},
+];
+
+// ══════════════════════════════
+//  STATE
+// ══════════════════════════════
+let S = {
+  view: 'dashboard',
+  config: { scriptUrl: '' },
+  projects: [],
+  activities: [],
+  categories: [],
+  expenses: [],
+  pending: [],
+  lastSyncAt: null,      // ISO: timestamp ของ pull ครั้งล่าสุด (Delta Sync)
+  currentProj: null,
+  currentAct:  null,     // กิจกรรมที่เลือกบน Dashboard
+  filterType:  'all',
+  filterProj:  '',       // โครงการที่เลือกในหน้ารายการ
+  filterAct:   '',       // กิจกรรมที่เลือกในหน้ารายการ
+  filterPayer: '',       // ผู้จ่ายที่เลือกในหน้ารายการ
+  editId:      null,     // ID ที่กำลังแก้ไข
+  amountMode:  'before', // 'before' | 'inclusive'
+  selectMode:  false,    // โหมดเลือกรายการสำหรับ PDF
+  selectedIds: new Set(), // IDs ที่เลือก
+  session:     null,     // { id, username, displayName, role } หลัง login
+  form: {
+    slipImgs: [], // {b64, name, mimeType, url, synced}
+    rcptImgs: [],
+    removedSlipUrls: [], // Drive URLs ถูกลบในโหมดแก้ไข (จะ delete ออกจาก Drive ตอน sync)
+    removedRcptUrls: [],
+  }
+};
+let currentDetailId = null;
+
+// ══════════════════════════════
+//  LOCAL STORAGE
+// ══════════════════════════════
+function save() {
+  try {
+    localStorage.setItem('fex_config', JSON.stringify(S.config));
+    localStorage.setItem('fex_projects', JSON.stringify(S.projects));
+    localStorage.setItem('fex_activities', JSON.stringify(S.activities));
+    localStorage.setItem('fex_categories', JSON.stringify(S.categories));
+    localStorage.setItem('fex_expenses', JSON.stringify(S.expenses));
+    localStorage.setItem('fex_pending', JSON.stringify(S.pending));
+    localStorage.setItem('fex_last_sync', S.lastSyncAt || '');
+    localStorage.setItem('fex_curProj', S.currentProj ? JSON.stringify(S.currentProj) : '');
+    localStorage.setItem('fex_users', JSON.stringify(_cachedUsers));
+  } catch(e) { console.warn('localStorage full', e); }
+}
+
+function load() {
+  S.config = JSON.parse(localStorage.getItem('fex_config') || '{}');
+  // sync scriptUrl จาก key เฉพาะ (ถูก set จากหน้า Login ด้วย)
+  const _directUrl = localStorage.getItem('fex_script_url');
+  if(_directUrl) S.config.scriptUrl = _directUrl;
+  S.projects = JSON.parse(localStorage.getItem('fex_projects') || '[]');
+  S.activities = JSON.parse(localStorage.getItem('fex_activities') || '[]');
+  const savedCats = localStorage.getItem('fex_categories');
+  S.categories = savedCats ? JSON.parse(savedCats) : DEFAULT_CATS;
+  S.expenses = JSON.parse(localStorage.getItem('fex_expenses') || '[]');
+  S.pending     = JSON.parse(localStorage.getItem('fex_pending') || '[]');
+  S.lastSyncAt  = localStorage.getItem('fex_last_sync') || null;
+  const cp = localStorage.getItem('fex_curProj');
+  S.currentProj = cp ? JSON.parse(cp) : null;
+  // โหลด users cache
+  const uc = localStorage.getItem('fex_users');
+  _cachedUsers = uc ? JSON.parse(uc) : [];
+  if(_cachedUsers.length === 0) {
+    _cachedUsers = [{ id:'USR-1', username:'admin', displayName:'ผู้ดูแลระบบ', role:'admin', active:true }];
+  }
+}
+
+// ══════════════════════════════
+//  AUTH — LOGIN / LOGOUT / ROLES
+// ══════════════════════════════
+function isAdmin() { return S.session?.role === 'admin'; }
+
+function checkSession() {
+  try {
+    const s = localStorage.getItem('fex_session');
+    S.session = s ? JSON.parse(s) : null;
+  } catch(_) { S.session = null; }
+  if(!S.session) { showLogin(); return; }
+  hideLogin();
+  applyRoleUI();
+  updateHeaderUser();
+}
+
+function showLogin() {
+  const el = $('loginOverlay');
+  if(el) el.style.display = 'flex';
+  $('loginUser')?.focus();
+  // แสดง URL status ตั้งแต่เปิดหน้า login
+  if($('loginScriptUrl')) $('loginScriptUrl').value = S.config.scriptUrl||'';
+  updateLoginUrlStatus();
+}
+
+function hideLogin() {
+  const el = $('loginOverlay');
+  if(el) el.style.display = 'none';
+}
+
+async function doLogin() {
+  const username = ($('loginUser')?.value || '').trim();
+  const password = $('loginPass')?.value || '';
+  if(!username || !password) {
+    $('loginErr').textContent = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน';
+    $('loginErr').style.display = 'block';
+    return;
+  }
+
+  const btn = $('loginBtn');
+  const txt = $('loginBtnTxt');
+  if(btn) btn.disabled = true;
+  if(txt) txt.innerHTML = '<div class="spinner" style="border-top-color:var(--primary);border-color:rgba(37,99,235,.2)"></div>';
+
+  // ถ้ามี GAS URL → ยืนยันกับ Sheet
+  if(S.config.scriptUrl) {
+    try {
+      const r = await apiCall({ action: 'login', username, password });
+      if(btn) btn.disabled = false;
+      if(txt) txt.textContent = '🔐 เข้าสู่ระบบ';
+      if(r.success && r.user) {
+        _loginSuccess(r.user);
+        return;
+      } else {
+        $('loginErr').textContent = r.error || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+        $('loginErr').style.display = 'block';
+        return;
+      }
+    } catch(_) {
+      // ถ้าออฟไลน์ → fallback เช็ค local session cache
+    }
+  }
+
+  // ออฟไลน์ หรือยังไม่มี GAS URL → ตรวจ admin default หรือ cached users
+  if(btn) btn.disabled = false;
+  if(txt) txt.textContent = '🔐 เข้าสู่ระบบ';
+
+  // fallback: ตรวจ admin default (ใช้ครั้งแรก ก่อนตั้งค่า GAS)
+  if(username === 'admin' && password === 'admin1234') {
+    _loginSuccess({ id: 'USR-1', username: 'admin', displayName: 'ผู้ดูแลระบบ', role: 'admin' });
+    return;
+  }
+
+  $('loginErr').textContent = !S.config.scriptUrl
+    ? 'กรุณาตั้งค่า Script URL ก่อน หรือใช้บัญชี admin เริ่มต้น'
+    : 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (ออฟไลน์)';
+  $('loginErr').style.display = 'block';
+}
+
+function _loginSuccess(user) {
+  S.session = user;
+  localStorage.setItem('fex_session', JSON.stringify(user));
+  $('loginUser').value = '';
+  $('loginPass').value = '';
+  $('loginErr').style.display = 'none';
+  hideLogin();
+  applyRoleUI();
+  updateHeaderUser();
+  toast(`ยินดีต้อนรับ ${user.displayName} 👋`, 'ok');
+}
+
+function doLogout() {
+  if(!confirm(`ออกจากระบบ (${S.session?.displayName||''})?`)) return;
+  S.session = null;
+  localStorage.removeItem('fex_session');
+  applyRoleUI();
+  showLogin();
+}
+
+function applyRoleUI() {
+  const admin = isAdmin();
+  // แสดง/ซ่อน admin-only elements
+  // ใช้ el.style.display = '' จะถูก override ด้วย CSS class ดังนั้น set ค่า explicit
+  document.querySelectorAll('.admin-only').forEach(el => {
+    if(admin) {
+      // ดูว่า element เป็น set-item (flex) หรือ card/อื่นๆ (block)
+      const natural = el.classList.contains('set-item') ? 'flex' : 'block';
+      el.style.display = natural;
+    } else {
+      el.style.display = 'none';
+    }
+  });
+  // Delete buttons in project/activity modals (re-rendered on open)
+  // Delete button in detail modal
+  const delBtn = document.querySelector('#modalDetail .btn-danger');
+  if(delBtn) delBtn.style.display = admin ? '' : 'none';
+}
+
+function updateHeaderUser() {
+  const chip = $('userChip');
+  if(!chip) return;
+  if(S.session) {
+    chip.style.display = 'flex';
+    $('userChipName').textContent = S.session.displayName || S.session.username;
+    const rb = $('userChipRole');
+    rb.textContent = S.session.role === 'admin' ? 'Admin' : 'User';
+    rb.className = 'role-badge ' + (S.session.role === 'admin' ? 'admin' : 'user');
+  } else {
+    chip.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════
+//  USER MANAGEMENT (admin only)
+// ══════════════════════════════
+let _cachedUsers = [];
+
+async function renderUserList() {
+  const el = $('userList');
+  if(!el) return;
+  // โหลดจาก GAS ถ้ามี URL (อัปเดต cache)
+  if(S.config.scriptUrl) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px">⏳ กำลังโหลด...</div>';
+    try {
+      const r = await apiCall({ action: 'getUsers' });
+      if(r.success && r.users && r.users.length > 0) {
+        _cachedUsers = r.users;
+        save(); // บันทึก cache
+      }
+    } catch(_) {}
+  }
+  if(_cachedUsers.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--muted);margin-bottom:8px">ยังไม่มีผู้ใช้</div>';
+    return;
+  }
+  el.innerHTML = _cachedUsers.map(u => `
+    <div class="user-row" id="urow-${u.id}">
+      <div class="user-avatar">${(u.displayName||u.username||'?')[0].toUpperCase()}</div>
+      <div class="user-info">
+        <div class="user-dname">${u.displayName||''} <span class="role-badge ${u.role==='admin'?'admin':'user'}" style="font-size:9px">${u.role==='admin'?'Admin':'User'}</span></div>
+        <div class="user-meta">@${u.username||''} · ${u.active===false?'❌ ปิดใช้งาน':'✅ ใช้งาน'}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button onclick="openEditUser('${u.id}')" style="color:var(--primary);border:1px solid var(--primary);background:none;font-size:11px;border-radius:6px;padding:2px 8px;cursor:pointer;font-family:inherit">✏️</button>
+        ${u.id !== S.session?.id ? `<button onclick="deleteUser('${u.id}')" style="color:var(--red);border:none;background:none;font-size:18px;cursor:pointer;padding:0 4px">✕</button>` : '<span style="width:28px"></span>'}
+      </div>
+    </div>
+    <div class="user-edit-panel" id="uedit-${u.id}" style="display:none;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;margin:-6px 0 6px;font-size:13px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:2px">ชื่อแสดง</label>
+          <input id="ue-dname-${u.id}" value="${u.displayName||''}" class="form-inp" style="font-size:12px;padding:5px 8px;width:100%"></div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:2px">Username</label>
+          <input id="ue-uname-${u.id}" value="${u.username||''}" class="form-inp" style="font-size:12px;padding:5px 8px;width:100%"></div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:2px">รหัสผ่านใหม่ (เว้นว่าง=ไม่เปลี่ยน)</label>
+          <input id="ue-pass-${u.id}" type="password" placeholder="••••••" class="form-inp" style="font-size:12px;padding:5px 8px;width:100%"></div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:2px">Role</label>
+          <select id="ue-role-${u.id}" class="form-inp form-sel" style="font-size:12px;padding:5px 8px;width:100%">
+            <option value="user" ${u.role==='user'?'selected':''}>User</option>
+            <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+          </select></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" id="ue-active-${u.id}" ${u.active!==false?'checked':''} style="width:14px;height:14px"> เปิดใช้งาน
+        </label>
+        <div style="flex:1"></div>
+        <button onclick="saveEditUser('${u.id}')" style="background:var(--primary);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:12px;font-family:inherit;cursor:pointer">💾 บันทึก</button>
+        <button onclick="closeEditUser('${u.id}')" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:5px 12px;font-size:12px;font-family:inherit;cursor:pointer">ยกเลิก</button>
+      </div>
+    </div>
+  `).join('');
+  $('userCount').textContent = _cachedUsers.length + ' ผู้ใช้';
+}
+
+async function addUser() {
+  const username    = ($('newUserName')?.value||'').trim();
+  const displayName = ($('newUserDisplay')?.value||'').trim();
+  const password    = ($('newUserPass')?.value||'').trim();
+  const role        = $('newUserRole')?.value || 'user';
+  if(!username || !password || !displayName) { toast('กรุณากรอกข้อมูลให้ครบ','err'); return; }
+  if(_cachedUsers.find(u=>u.username===username)) { toast('Username นี้มีอยู่แล้ว','err'); return; }
+  const user = { id: 'USR-'+Date.now(), username, displayName, password, role, active: true };
+  // บันทึก local ก่อนเสมอ
+  _cachedUsers.push(user);
+  save();
+  populatePayerSelect();
+  $('newUserName').value=''; $('newUserDisplay').value='';
+  $('newUserPass').value=''; $('newUserRole').value='user';
+  renderUserList();
+  toast(`เพิ่มผู้ใช้ "${displayName}" แล้ว`, 'ok');
+  // sync GAS ถ้ามี
+  if(S.config.scriptUrl) {
+    apiCall({ action: 'addUser', user }).catch(()=>{});
+  }
+}
+async function deleteUser(id) {
+  if(id === S.session?.id) { toast('ไม่สามารถลบบัญชีตัวเองได้','err'); return; }
+  if(!confirm('ลบผู้ใช้นี้?')) return;
+  _cachedUsers = _cachedUsers.filter(u=>u.id!==id);
+  save();
+  populatePayerSelect();
+  renderUserList();
+  toast('ลบผู้ใช้แล้ว','ok');
+  if(S.config.scriptUrl) apiCall({action:'deleteUser', id}).catch(()=>{});
+}
+function openEditUser(id) {
+  // ปิด panel อื่นๆ ก่อน
+  document.querySelectorAll('.user-edit-panel').forEach(el => el.style.display='none');
+  const panel = $('uedit-'+id);
+  if(panel) panel.style.display = panel.style.display==='none' ? 'block' : 'none';
+}
+function closeEditUser(id) {
+  const panel = $('uedit-'+id);
+  if(panel) panel.style.display = 'none';
+}
+function saveEditUser(id) {
+  const u = _cachedUsers.find(x=>x.id===id);
+  if(!u) return;
+  const displayName = ($('ue-dname-'+id)?.value||'').trim();
+  const username    = ($('ue-uname-'+id)?.value||'').trim();
+  const newPass     = ($('ue-pass-'+id)?.value||'').trim();
+  const role        = $('ue-role-'+id)?.value || 'user';
+  const active      = $('ue-active-'+id)?.checked !== false;
+  if(!displayName || !username) { toast('กรุณากรอกชื่อและ Username','err'); return; }
+  // ตรวจ username ซ้ำ (ยกเว้นตัวเอง)
+  if(_cachedUsers.find(x=>x.id!==id && x.username===username)) {
+    toast('Username นี้ถูกใช้แล้ว','err'); return;
+  }
+  u.displayName = displayName;
+  u.username    = username;
+  u.role        = role;
+  u.active      = active;
+  if(newPass) u.password = newPass;
+  // ถ้า edit ตัวเอง อัปเดต session ด้วย
+  if(id === S.session?.id) {
+    S.session.displayName = displayName;
+    S.session.role = role;
+    localStorage.setItem('fex_session', JSON.stringify(S.session));
+    applyRoleUI();
+    updateHeaderUser();
+  }
+  save();
+  populatePayerSelect();
+  renderUserList();
+  toast(`อัปเดต "${displayName}" แล้ว`, 'ok');
+  if(S.config.scriptUrl) apiCall({action:'updateUser', user: u}).catch(()=>{});
+}
+
+
+// ══════════════════════════════
+//  NAV & VIEWS
+// ══════════════════════════════
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  const nb = document.getElementById('nav-' + v);
+  if(nb) nb.classList.add('active');
+  S.view = v;
+  if(v==='dashboard') renderDashboard();
+  if(v==='expenses') { populateListFilters(); renderExpenseList(); }
+  if(v==='settings') renderSettings();
+}
+
+function openAddForm() {
+  showView('add');
+  resetForm();
+  populatePayerSelect();
+}
+
+// ══════════════════════════════
+//  MODALS
+// ══════════════════════════════
+function openModal(id) {
+  // guard admin-only modals
+  const adminModals = ['modalUsers','modalAddProject','modalAddActivity'];
+  if(adminModals.includes(id) && !isAdmin()) {
+    toast('เฉพาะ Admin เท่านั้น','err');
+    return;
+  }
+  document.getElementById(id).classList.add('open');
+  if(id==='modalProject') renderProjModal();
+  if(id==='modalAddProject') renderProjList();
+  if(id==='modalAddActivity') { renderActList(); populateActProjSelect(); }
+  if(id==='modalCategories') renderCatModal();
+  if(id==='modalUsers') { if(!isAdmin()) return; renderUserList(); }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ══════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════
+function renderDashboard() {
+  let exps = S.currentProj
+    ? S.expenses.filter(e => e.projectId === S.currentProj.id)
+    : S.expenses;
+
+  // ─── Activity chips (filter row) ───
+  renderActivityChips();
+  if(S.currentAct) exps = exps.filter(e => e.activityId === S.currentAct.id);
+
+  const total = exps.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const vat   = exps.reduce((s,e) => s + (parseFloat(e.vatAmount)||0), 0);
+  const wht   = exps.reduce((s,e) => s + (parseFloat(e.whtAmount)||0), 0);
+  const net   = exps.reduce((s,e) => s + (parseFloat(e.netAmount)||0), 0);
+
+  $('sumTotal').textContent = fmt(total);
+  $('sumNet').textContent   = fmt(net);
+  $('sumVat').textContent   = fmt(vat);
+  $('sumWHT').textContent   = fmt(wht);
+  $('sumCount').textContent = exps.length + ' รายการ';
+
+  // Project chip
+  if(S.currentProj) {
+    $('projName').textContent = S.currentProj.name;
+    $('projSub').textContent  = S.currentProj.code || 'แตะเพื่อเปลี่ยน';
+    // Budget progress — ถ้าเลือกกิจกรรม ให้แสดงงบกิจกรรม ไม่เช่นนั้นแสดงงบโครงการ
+    const budgetEntity = S.currentAct || S.currentProj;
+    const budget = parseFloat(budgetEntity.budget)||0;
+    const budgetLabel = S.currentAct
+      ? `งบกิจกรรม: ${S.currentAct.name}`
+      : 'งบประมาณโครงการ';
+    if(budget > 0) {
+      $('budgetCard').style.display='block';
+      $('budgetLbl').textContent = budgetLabel;
+      const pct = Math.min(100, (total/budget)*100);
+      $('budgetPct').textContent = pct.toFixed(1) + '%';
+      const fill = $('budgetFill');
+      fill.style.width = pct + '%';
+      fill.className = 'prog-fill' + (pct>=100?' over':pct>=80?' warn':'');
+      $('budgetUsed').textContent = 'ใช้ไป ' + fmt(total);
+      $('budgetLeft').textContent = 'คงเหลือ ' + fmt(Math.max(0, budget-total));
+    } else {
+      $('budgetCard').style.display='none';
+    }
+  } else {
+    $('projName').textContent = 'ทุกโครงการ';
+    $('projSub').textContent  = 'แตะเพื่อกรอง';
+    $('budgetCard').style.display='none';
+  }
+
+  // ─── Donut chart ───
+  renderDonutChart(exps, $('donutGroupSel').value || 'l1');
+
+  // Recent 5
+  const recent = [...exps].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  const rl = $('recentList');
+  if(recent.length===0) {
+    rl.innerHTML = `<div class="empty" style="padding:24px 0"><div class="ico">📋</div><div class="ttl" style="font-size:14px">ยังไม่มีรายการ</div><div class="sub" style="font-size:12px">กดปุ่ม + เพื่อเพิ่มค่าใช้จ่าย</div></div>`;
+  } else {
+    rl.innerHTML = recent.map(e => expItemHtml(e)).join('');
+  }
+}
+
+// ─── Activity filter chips on Dashboard ───
+function renderActivityChips() {
+  const row = $('dashActRow');
+  if(!S.currentProj) {
+    S.currentAct = null;
+    row.style.display = 'none';
+    return;
+  }
+  const acts = S.activities.filter(a => a.projectId === S.currentProj.id);
+  if(acts.length === 0) {
+    S.currentAct = null;
+    row.style.display = 'none';
+    return;
+  }
+  row.style.display = 'flex';
+  row.innerHTML =
+    `<button class="act-chip ${!S.currentAct?'on':''}" onclick="setDashboardActivity(null)">ทั้งหมด</button>` +
+    acts.map(a=>`<button class="act-chip ${S.currentAct?.id===a.id?'on':''}" onclick="setDashboardActivity('${a.id}')">${a.name}</button>`).join('');
+}
+
+function setDashboardActivity(id) {
+  S.currentAct = id ? (S.activities.find(a=>a.id===id)||null) : null;
+  renderDashboard();
+}
+
+// ─── Donut Chart (SVG inline) ───
+function renderDonutChart(expenses, groupBy) {
+  const wrap = $('donutWrap');
+  if(!expenses || expenses.length === 0) {
+    wrap.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0">ยังไม่มีข้อมูล — เพิ่มรายการเพื่อดูกราฟ</div>';
+    return;
+  }
+
+  // Group data
+  const groups = {};
+  expenses.forEach(e => {
+    let key;
+    if(groupBy === 'l2')      key = e.catL2    || 'ไม่ระบุ';
+    else if(groupBy === 'project') key = e.projectName || 'ไม่ระบุ';
+    else                      key = e.catL1    || 'ไม่ระบุ';
+    groups[key] = (groups[key]||0) + (parseFloat(e.amount)||0);
+  });
+
+  const total = Object.values(groups).reduce((s,v)=>s+v, 0);
+  if(total === 0) {
+    wrap.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px 0">ยอดรวม 0</div>';
+    return;
+  }
+
+  // Sort desc, top 6 + อื่นๆ
+  const sorted = Object.entries(groups).sort((a,b)=>b[1]-a[1]);
+  const items = sorted.slice(0,6);
+  if(sorted.length > 6) {
+    items.push(['อื่นๆ', sorted.slice(6).reduce((s,[,v])=>s+v,0)]);
+  }
+
+  const palette = ['#2563EB','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#94A3B8'];
+  const cx=72, cy=72, R=58, ri=38;
+  let ang = -Math.PI/2;
+  let paths = '';
+
+  items.forEach(([, val], i) => {
+    const frac  = val / total;
+    if(frac < 0.002) return;
+    const sweep = frac * 2 * Math.PI;
+    const end   = ang + sweep;
+    const lg    = sweep > Math.PI ? 1 : 0;
+    const cos0  = Math.cos(ang), sin0  = Math.sin(ang);
+    const cos1  = Math.cos(end), sin1  = Math.sin(end);
+    paths += `<path d="M${(cx+R*cos0).toFixed(2)},${(cy+R*sin0).toFixed(2)} A${R},${R} 0 ${lg},1 ${(cx+R*cos1).toFixed(2)},${(cy+R*sin1).toFixed(2)} L${(cx+ri*cos1).toFixed(2)},${(cy+ri*sin1).toFixed(2)} A${ri},${ri} 0 ${lg},0 ${(cx+ri*cos0).toFixed(2)},${(cy+ri*sin0).toFixed(2)} Z" fill="${palette[i%palette.length]}" stroke="#fff" stroke-width="2.5"/>`;
+    ang = end;
+  });
+
+  const totalFmt = '฿'+(total).toLocaleString('th-TH',{maximumFractionDigits:0});
+
+  const legend = items.map(([label, val], i) => {
+    const pct = ((val/total)*100).toFixed(1);
+    return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+      <div style="width:10px;height:10px;border-radius:2px;flex-shrink:0;background:${palette[i%palette.length]}"></div>
+      <div style="font-size:11.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${label}</div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  wrap.innerHTML = `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <svg width="144" height="144" viewBox="0 0 144 144" style="flex-shrink:0">
+      ${paths}
+      <text x="72" y="67" text-anchor="middle" font-size="10" fill="#64748B" font-family="inherit">รวม</text>
+      <text x="72" y="82" text-anchor="middle" font-size="12" font-weight="700" fill="#1E293B" font-family="inherit">${totalFmt}</text>
+    </svg>
+    <div style="flex:1;min-width:120px">${legend}</div>
+  </div>`;
+}
+
+// ══════════════════════════════
+//  EXPENSE LIST
+// ══════════════════════════════
+function setFilter(t, btn) {
+  S.filterType = t;
+  document.querySelectorAll('.chips .chip').forEach(c => c.classList.remove('on'));
+  btn.classList.add('on');
+  renderExpenseList();
+}
+
+// ─── Populate the project/activity dropdowns in the expense list ───
+function populateListFilters() {
+  const sel = $('listProjSel');
+  if(!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">📁 ทุกโครงการ</option>' +
+    S.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  if(prev && S.projects.find(p=>p.id===prev)) sel.value = prev;
+
+  onListProjectChange(false);  // refresh activity dropdown
+  populateListCatFilters();    // refresh catL1/L2 dropdowns
+  populatePayerFilter();       // refresh payer dropdown
+}
+
+function populatePayerFilter() {
+  const sel = $('listPayerSel');
+  if(!sel) return;
+  const prevVal = sel.value;
+  // รวม users ทุกคน + payers จาก expenses (กรณียังไม่ sync)
+  const fromUsers = _cachedUsers.filter(u=>u.active!==false).map(u=>u.displayName);
+  const fromExp   = S.expenses.map(e=>e.payer||'').filter(Boolean);
+  const payers    = [...new Set([...fromUsers, ...fromExp])].sort();
+  sel.innerHTML = '<option value="">👤 ทุกผู้จ่าย</option>' +
+    payers.map(p=>`<option value="${p}">${p}</option>`).join('');
+  if(prevVal && payers.includes(prevVal)) sel.value = prevVal;
+}
+function populatePayerSelect() {
+  const sel = $('fPayer');
+  if(!sel || sel.tagName !== 'SELECT') return;
+
+  if(isAdmin()) {
+    // Admin: เลือกผู้จ่ายได้ทุกคน
+    const prev  = sel.value;
+    const users = _cachedUsers.filter(u=>u.active!==false);
+    sel.innerHTML = users.map(u=>`<option value="${u.displayName}">${u.displayName} (${u.username})</option>`).join('')
+      || '<option value="">— ไม่มีผู้ใช้ —</option>';
+    sel.disabled  = false;
+    sel.style.opacity = '';
+    sel.style.cursor  = '';
+    if(prev && users.find(u=>u.displayName===prev)) {
+      sel.value = prev;
+    } else if(S.session?.displayName) {
+      sel.value = S.session.displayName;
+    }
+  } else {
+    // User ทั่วไป: ล็อคที่ชื่อตัวเอง ไม่ให้เปลี่ยน
+    const myName = S.session?.displayName || '';
+    sel.innerHTML = `<option value="${myName}">${myName}</option>`;
+    sel.value     = myName;
+    sel.disabled  = true;
+    sel.style.opacity = '0.7';
+    sel.style.cursor  = 'not-allowed';
+  }
+}
+
+
+
+// Called when the project dropdown in the list view changes
+function onListProjectChange(doRender) {
+  const pid    = $('listProjSel')?.value || '';
+  const acts   = pid ? S.activities.filter(a=>a.projectId===pid) : S.activities;
+  const actSel = $('listActSel');
+  if(!actSel) return;
+  const prevAct = actSel.value;
+  actSel.innerHTML = '<option value="">📋 ทุกกิจกรรม</option>' +
+    acts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  if(prevAct && acts.find(a=>a.id===prevAct)) actSel.value = prevAct;
+  if(doRender !== false) renderExpenseList();
+}
+
+// ─── Populate catL1 dropdown ───
+function populateListCatFilters() {
+  const l1Sel = $('listCatL1');
+  if(!l1Sel) return;
+  const prev = l1Sel.value;
+  const l1s = [...new Set(S.categories.map(c=>c.l1||c.catL1).filter(Boolean))].sort();
+  l1Sel.innerHTML = '<option value="">🗂 ทุกหมวดหลัก</option>' +
+    l1s.map(l=>`<option value="${l}">${l}</option>`).join('');
+  if(prev && l1s.includes(prev)) l1Sel.value = prev;
+  onListCatL1Change(false);
+}
+
+// ─── Called when catL1 changes → update catL2 ───
+function onListCatL1Change(doRender) {
+  const l1 = $('listCatL1')?.value || '';
+  const l2Sel = $('listCatL2');
+  if(!l2Sel) return;
+  const prevL2 = l2Sel.value;
+  const cats = l1
+    ? S.categories.filter(c=>(c.l1||c.catL1)===l1)
+    : S.categories;
+  const l2s = [...new Set(cats.map(c=>c.l2||c.catL2).filter(Boolean))].sort();
+  l2Sel.innerHTML = '<option value="">📂 ทุกหมวดย่อย</option>' +
+    l2s.map(l=>`<option value="${l}">${l}</option>`).join('');
+  if(prevL2 && l2s.includes(prevL2)) l2Sel.value = prevL2;
+  if(doRender !== false) renderExpenseList();
+}
+
+// ─── Selection mode ───
+function toggleSelectMode(btn) {
+  S.selectMode = !S.selectMode;
+  S.selectedIds.clear();
+  btn.classList.toggle('on', S.selectMode);
+  btn.textContent = S.selectMode ? '✕ ยกเลิก' : '☑️ เลือก';
+  $('selBar').style.display = S.selectMode ? 'flex' : 'none';
+  renderExpenseList();
+}
+
+function toggleSelect(id) {
+  if(S.selectedIds.has(id)) S.selectedIds.delete(id);
+  else S.selectedIds.add(id);
+  const selected = S.selectedIds.has(id);
+  document.querySelectorAll(`.exp-item[data-id="${id}"]`).forEach(item => {
+    item.classList.toggle('selected', selected);
+    const cb = item.querySelector('.exp-check');
+    if(cb) cb.checked = selected;
+  });
+  updateSelCount();
+}
+
+// ── Unified click handler สำหรับ expense item ──
+// ตรวจ mode ตอน click จริง — ไม่ต้องขึ้นกับว่า onclick ถูก render ตอนไหน
+function itemClick(id) {
+  if(S.selectMode) toggleSelect(id);
+  else openDetail(id);
+}
+
+function updateSelCount() {
+  $('selCount').textContent = `เลือก ${S.selectedIds.size} รายการ`;
+}
+
+function selectAllVisible() {
+  // Select all currently visible IDs
+  document.querySelectorAll('.exp-item[data-id]').forEach(el => {
+    S.selectedIds.add(el.dataset.id);
+    el.classList.add('selected');
+    const cb = el.querySelector('.exp-check');
+    if(cb) cb.checked = true;
+  });
+  updateSelCount();
+}
+
+function clearSelection() {
+  S.selectedIds.clear();
+  document.querySelectorAll('.exp-item.selected').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.exp-check').forEach(cb => cb.checked = false);
+  updateSelCount();
+}
+
+function renderExpenseList() {
+  const q           = ($('searchInp').value||'').toLowerCase();
+  const projFilter  = $('listProjSel')?.value  || '';
+  const actFilter   = $('listActSel')?.value   || '';
+  const catL1Filter = $('listCatL1')?.value    || '';
+  const catL2Filter = $('listCatL2')?.value    || '';
+  const payerFilter = $('listPayerSel')?.value || '';
+
+  let exps = S.expenses;
+
+  // Filter ตาม dropdown ของหน้ารายการเท่านั้น (ไม่อ้างอิงจากหน้าหลัก)
+  if(projFilter) exps = exps.filter(e => e.projectId === projFilter);
+
+  if(actFilter)    exps = exps.filter(e => e.activityId === actFilter);
+  if(catL1Filter)  exps = exps.filter(e => e.catL1 === catL1Filter);
+  if(catL2Filter)  exps = exps.filter(e => e.catL2 === catL2Filter);
+  if(payerFilter)  exps = exps.filter(e => (e.payer||'') === payerFilter);
+
+  if(S.filterType !== 'all') exps = exps.filter(e => e.docType === S.filterType);
+  if(q) exps = exps.filter(e =>
+    (e.description||'').toLowerCase().includes(q) ||
+    (e.catL3||'').toLowerCase().includes(q) ||
+    (e.catL2||'').toLowerCase().includes(q) ||
+    (e.projectName||'').toLowerCase().includes(q)
+  );
+
+  exps = [...exps].sort((a,b) => b.date.localeCompare(a.date));
+
+  const el = $('expenseList');
+  if(exps.length === 0) {
+    el.innerHTML = `<div class="empty"><div class="ico">🗂️</div><div class="ttl">ไม่พบรายการ</div><div class="sub">ลองเปลี่ยนตัวกรองหรือเพิ่มรายการใหม่</div></div>`;
+    return;
+  }
+
+  // Group by date
+  const grouped = {};
+  exps.forEach(e => {
+    if(!grouped[e.date]) grouped[e.date] = [];
+    grouped[e.date].push(e);
+  });
+
+  el.innerHTML = Object.entries(grouped).map(([date, items]) => `
+    <div class="date-grp">
+      <div class="date-lbl">${fmtDate(date)} — รวม ${fmt(items.reduce((s,e)=>s+(parseFloat(e.amount)||0),0))}</div>
+      <div class="card card-sm" style="padding:0 14px">
+        ${items.map(e => expItemHtml(e)).join('')}
+      </div>
+    </div>
+  `).join('');
+  // restore selection checkboxes state after re-render
+  if(S.selectMode) {
+    document.querySelectorAll('.exp-item[data-id]').forEach(el => {
+      const cb = el.querySelector('.exp-check');
+      if(cb && S.selectedIds.has(el.dataset.id)) {
+        cb.checked = true;
+        el.classList.add('selected');
+      }
+    });
+    updateSelCount();
+  }
+}
+
+function expItemHtml(e) {
+  // รวม synced Drive URLs + unsynced local base64
+  const su = allSlipUrls(e);
+  const ru = allRcptUrls(e);
+  const thumb = su[0]
+    ? `<img src="${driveImgSrc(su[0])}" onerror="this.parentElement.innerHTML='🧾'">`
+    : ru[0]
+      ? `<img src="${driveImgSrc(ru[0])}" onerror="this.parentElement.innerHTML='🧾'">`
+      : catIcon(e.catL1);
+
+  const badgeClass = e.docType==='ใบกำกับภาษี'?'tax':e.docType==='ใบเสร็จรับเงิน'?'receipt':'';
+  const selClass = S.selectedIds.has(e.id) ? ' selected' : '';
+  // onclick เดียว ทำงานทั้ง 2 mode — ตรวจ S.selectMode ตอน click (ไม่ใช่ตอน render)
+  return `<div class="exp-item${selClass}" data-id="${e.id}" onclick="itemClick('${e.id}')">
+    ${S.selectMode ? `<input type="checkbox" class="exp-check" ${S.selectedIds.has(e.id)?'checked':''}>` : ''}
+    <div class="exp-thumb">${thumb}</div>
+    <div class="exp-info">
+      <div class="exp-cat">${e.catL1||''} › ${e.catL2||''}</div>
+      <div class="exp-name">${e.description||e.catL3||'ไม่มีชื่อ'}</div>
+      <div class="exp-meta">${e.projectName||''} ${e.activityName?'· '+e.activityName:''}${e.payer?' · 👤'+e.payer:''}</div>
+    </div>
+    <div class="exp-right">
+      <div class="exp-amt">${fmt(parseFloat(e.netAmount)||parseFloat(e.amount)||0)}</div>
+      <div class="exp-badge ${badgeClass}">${e.docType||'—'}</div>
+    </div>
+  </div>`;
+}
+
+function catIcon(l1) {
+  const m = {'ค่าตอบแทน':'👤','ค่าใช้สอย':'🚗','ค่าวัสดุ':'📦','ค่าสาธารณูปโภค':'💡'};
+  return m[l1] || '🧾';
+}
+
+// ══════════════════════════════
+//  EXPENSE DETAIL
+// ══════════════════════════════
+function openDetail(id) {
+  const e = S.expenses.find(x=>x.id===id);
+  if(!e) return;
+  currentDetailId = id;
+
+  const rows = [
+    ['วันที่', fmtDate(e.date)],
+    ['โครงการ', e.projectName||'-'],
+    ['กิจกรรม', e.activityName||'-'],
+    ['หมวดหมู่', [e.catL1,e.catL2,e.catL3].filter(Boolean).join(' › ')],
+    ['ประเภทเอกสาร', e.docType||'-'],
+    ['รายละเอียด', e.description||'-'],
+    ['วิธีชำระ', e.payment||'-'],
+    ['ผู้จ่ายเงิน', e.payer||'-'],
+    ['บันทึกโดย', e.addedBy||'-'],
+    ['ยอดรวม', fmt(parseFloat(e.amount)||0)],
+    ['VAT', e.vatAmount>0 ? fmt(e.vatAmount)+` (${e.vatRate}%)` : '-'],
+    ['หัก ณ ที่จ่าย', e.whtAmount>0 ? fmt(e.whtAmount)+` (${e.whtRate}%)` : '-'],
+    ['ยอดสุทธิ', '<strong>'+fmt(parseFloat(e.netAmount)||0)+'</strong>'],
+    ['หมายเหตุ', e.note||'-'],
+    ['สถานะซิงค์', e.synced?'✅ ซิงค์แล้ว':'⏳ รอซิงค์'],
+  ];
+  // gate delete button: admin only
+  // แสดงปุ่ม Edit/Delete เฉพาะ admin หรือเจ้าของรายการ
+  const canEdit = isAdmin() || e.payer === S.session?.displayName || e.payer === S.session?.username;
+  const editBtnEl = document.querySelector('#modalDetail .btn-edit');
+  const delBtnEl  = document.querySelector('#modalDetail .btn-danger');
+  if(editBtnEl) editBtnEl.style.display = canEdit ? '' : 'none';
+  if(delBtnEl)  delBtnEl.style.display  = canEdit ? '' : 'none';
+
+  $('detailContent').innerHTML = rows.map(([l,v])=>
+    `<div class="detail-row"><span class="detail-lbl">${l}</span><span class="detail-val">${v}</span></div>`
+  ).join('');
+
+  // รวม Drive URLs (synced) + local base64 (unsynced) เพื่อแสดงรูปทุกกรณี
+  // ใช้ driveImgSrc() แปลง drive.google.com/uc?id=... → lh3.googleusercontent.com/d/...
+  const allImgs = [
+    ...allSlipUrls(e).map(u=>({u:driveImgSrc(u),t:'สลิป'})),
+    ...allRcptUrls(e).map(u=>({u:driveImgSrc(u),t:'ใบเสร็จ'}))
+  ];
+  window._detailImgs = allImgs; // index-based onclick (safe for large data: URLs)
+  $('detailImages').innerHTML = allImgs.length > 0
+    ? `<div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">หลักฐาน (${allImgs.length} รูป)</div>
+       <div class="prev-grid">${allImgs.map(({u,t},i)=>`<div class="prev-item" onclick="viewImg(window._detailImgs[${i}].u,window._detailImgs[${i}].t)"><img src="${u}" onerror="this.parentElement.innerHTML='🖼️'"></div>`).join('')}</div>`
+    : '<div style="font-size:12px;color:var(--muted);padding:6px 0">ไม่มีรูปสลิป / ใบเสร็จ</div>';
+
+  openModal('modalDetail');
+}
+
+function deleteExpense(id) {
+  const _e = S.expenses.find(x=>x.id===id);
+  if(_e) {
+    const canDel = isAdmin() || _e.payer === S.session?.displayName || _e.payer === S.session?.username;
+    if(!canDel) { toast('คุณไม่มีสิทธิ์ลบรายการนี้','err'); return; }
+  }
+  if(!confirm('ยืนยันลบรายการนี้?')) return;
+  const e = S.expenses.find(x=>x.id===id);
+  // ลบรูปใน Drive (fire-and-forget — ไม่รอ)
+  if(e) _deleteExpenseDriveImages(e);
+  // ลบออกจาก Sheets
+  if(S.config.scriptUrl) apiCall({action:'deleteExpense', id}).catch(()=>{});
+  S.expenses = S.expenses.filter(x => x.id !== id);
+  S.pending  = S.pending.filter(p => p.data.id !== id);
+  save();
+  closeModal('modalDetail');
+  renderExpenseList();
+  renderDashboard();
+  toast('ลบรายการแล้ว', 'ok');
+}
+
+// ── Helper: ลบ Drive images จาก expense object ──
+function _deleteExpenseDriveImages(e) {
+  if(!S.config.scriptUrl) return;
+  const urls = [...toUrlArray(e.slipUrls), ...toUrlArray(e.rcptUrls)];
+  urls.forEach(url => {
+    const fid = driveFileIdFromUrl(url);
+    if(fid) apiCall({action:'deleteImage', fileId:fid}).catch(()=>{});
+  });
+}
+
+// ── Helper: ลบ expenses ที่เกี่ยวข้อง (Sheets + Drive) โดยไม่ถาม ──
+function _cascadeDeleteExpenses(expList) {
+  expList.forEach(e => {
+    _deleteExpenseDriveImages(e);
+    if(S.config.scriptUrl) apiCall({action:'deleteExpense', id:e.id}).catch(()=>{});
+  });
+  const ids = new Set(expList.map(e=>e.id));
+  S.expenses = S.expenses.filter(e=>!ids.has(e.id));
+  S.pending  = S.pending.filter(p=>!ids.has(p.data.id));
+}
+
+// ══════════════════════════════
+//  FORM
+// ══════════════════════════════
+function resetForm() {
+  S.editId = null;
+  S.amountMode = 'before';
+  $('formEditBadge').style.display = 'none';
+  $('formTitle').textContent = '📝 บันทึกค่าใช้จ่าย';
+  $('saveBtnTxt').textContent = '💾 บันทึกรายการ';
+  document.querySelectorAll('.amt-mode-btn').forEach(b=>b.classList.remove('on'));
+  $('amtModeBefore').classList.add('on');
+
+  const today = new Date().toISOString().split('T')[0];
+  $('fDate').value = today;
+  $('fDocType').value = 'ใบรับเงิน';
+  $('fProject').value = '';
+  $('fActivity').value = '';
+  $('fCatL1').value = '';
+  $('fCatL2').value = '';
+  $('fCatL3').value = '';
+  $('fDesc').value = '';
+  $('fAmount').value = '';
+  $('fPayment').value = 'โอนเงิน';
+  // fPayer (select) will be set by populatePayerSelect() inside populateFormSelects() below
+  $('fNote').value = '';
+  $('vatToggle').classList.remove('on');
+  $('vatFields').style.display='none';
+  $('whtToggle').classList.remove('on');
+  $('whtFields').style.display='none';
+  S.form.slipImgs = [];
+  S.form.rcptImgs = [];
+  S.form.removedSlipUrls = [];
+  S.form.removedRcptUrls = [];
+  renderPrev('slip');
+  renderPrev('rcpt');
+  calcTax();
+  populateFormSelects();
+
+  if(S.currentProj) {
+    $('fProject').value = S.currentProj.id;
+    onProjectChange();
+  }
+}
+
+// ── แปลง date string (รองรับ ISO + YYYY-MM-DD) → local YYYY-MM-DD ──
+function toLocalDateStr(dateStr) {
+  if (!dateStr) return '';
+  if (dateStr.length === 10) return dateStr;        // แล้วเป็น YYYY-MM-DD
+  const d = new Date(dateStr);                      // ISO → Date object
+  if (isNaN(d)) return dateStr.substring(0,10);     // fallback
+  // ใช้ local timezone ของ browser (ไม่ใช้ UTC)
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return y + '-' + m + '-' + day;
+}
+
+// ── แก้ไขรายการที่มีอยู่ ──
+function editExpense(id) {
+  const e = S.expenses.find(x=>x.id===id);
+  if(!e) return;
+  // ตรวจสิทธิ์: admin หรือ payer ตรงกับ user ที่ login
+  const canEdit = isAdmin() || e.payer === S.session?.displayName || e.payer === S.session?.username;
+  if(!canEdit) { toast('คุณไม่มีสิทธิ์แก้ไขรายการนี้','err'); return; }
+  populatePayerSelect();
+  closeModal('modalDetail');
+
+  S.editId = id;
+  S.amountMode = 'before';
+  $('formEditBadge').style.display = 'flex';
+  $('formTitle').textContent = '✏️ แก้ไขรายการ';
+  $('saveBtnTxt').textContent = '💾 อัปเดตรายการ';
+  document.querySelectorAll('.amt-mode-btn').forEach(b=>b.classList.remove('on'));
+  $('amtModeBefore').classList.add('on');
+
+  populateFormSelects();
+  $('fDate').value    = toLocalDateStr(e.date); // แปลงให้ถูก timezone
+  $('fDocType').value = e.docType||'ใบรับเงิน';
+  $('fProject').value = e.projectId||'';
+  onProjectChange();
+  setTimeout(()=>{ $('fActivity').value = e.activityId||''; }, 0);
+  $('fCatL1').value   = e.catL1||''; onCatL1Change();
+  setTimeout(()=>{ $('fCatL2').value = e.catL2||''; onCatL2Change(); }, 0);
+  setTimeout(()=>{ $('fCatL3').value = e.catL3||''; }, 20);
+  $('fDesc').value    = e.description||'';
+  $('fAmount').value  = parseFloat(e.amount)||'';
+  $('fPayment').value = e.payment||'โอนเงิน';
+  $('fPayer').value   = e.payer || S.session?.displayName || '';
+  $('fNote').value    = e.note||'';
+
+  // VAT
+  if((parseFloat(e.vatAmount)||0) > 0) {
+    $('vatToggle').classList.add('on');
+    $('vatFields').style.display='block';
+    $('fVatRate').value = e.vatRate||7;
+  } else {
+    $('vatToggle').classList.remove('on');
+    $('vatFields').style.display='none';
+  }
+  // WHT
+  if((parseFloat(e.whtAmount)||0) > 0) {
+    $('whtToggle').classList.add('on');
+    $('whtFields').style.display='block';
+    $('fWhtRate').value = e.whtRate||3;
+  } else {
+    $('whtToggle').classList.remove('on');
+    $('whtFields').style.display='none';
+  }
+
+  S.form.removedSlipUrls = [];
+  S.form.removedRcptUrls = [];
+  // โหลดรูปที่ sync แล้ว (Drive URLs)
+  S.form.slipImgs = toUrlArray(e.slipUrls).map(u=>({url:u, b64:u, name:'', mimeType:'', synced:true}));
+  S.form.rcptImgs = toUrlArray(e.rcptUrls).map(u=>({url:u, b64:u, name:'', mimeType:'', synced:true}));
+  // โหลดรูปที่ยังไม่ sync (base64 ใน slipData)
+  (e.slipData||[]).forEach(i=>S.form.slipImgs.push({url:i.b64||'', b64:i.b64||'', name:i.name||'', mimeType:i.mime||'', synced:false}));
+  (e.rcptData||[]).forEach(i=>S.form.rcptImgs.push({url:i.b64||'', b64:i.b64||'', name:i.name||'', mimeType:i.mime||'', synced:false}));
+  renderPrev('slip');
+  renderPrev('rcpt');
+  calcTax();
+  showView('add');
+}
+
+function populateFormSelects() {
+  // Projects
+  const ps = $('fProject');
+  ps.innerHTML = '<option value="">— เลือกโครงการ —</option>' +
+    S.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+
+  // Categories L1
+  const l1s = [...new Set(S.categories.map(c=>c.l1))];
+  $('fCatL1').innerHTML = '<option value="">— เลือกประเภทหลัก —</option>' +
+    l1s.map(l=>`<option value="${l}">${l}</option>`).join('');
+  $('fCatL2').innerHTML = '<option value="">— เลือก —</option>';
+  $('fCatL3').innerHTML = '<option value="">— เลือก —</option>';
+  populatePayerSelect();
+}
+
+function onProjectChange() {
+  const pid = $('fProject').value;
+  const acts = S.activities.filter(a => a.projectId === pid);
+  $('fActivity').innerHTML = '<option value="">— เลือกกิจกรรม —</option>' +
+    acts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+}
+
+function onCatL1Change() {
+  const l1 = $('fCatL1').value;
+  const l2s = [...new Set(S.categories.filter(c=>c.l1===l1).map(c=>c.l2))];
+  $('fCatL2').innerHTML = '<option value="">— เลือก —</option>' +
+    l2s.map(l=>`<option value="${l}">${l}</option>`).join('');
+  $('fCatL3').innerHTML = '<option value="">— เลือก —</option>';
+}
+
+function onCatL2Change() {
+  const l1 = $('fCatL1').value;
+  const l2 = $('fCatL2').value;
+  const l3s = S.categories.filter(c=>c.l1===l1&&c.l2===l2).map(c=>c.l3);
+  $('fCatL3').innerHTML = '<option value="">— เลือก —</option>' +
+    l3s.map(l=>`<option value="${l}">${l}</option>`).join('');
+}
+
+// ── TAX CALC ──
+function toggleVAT() {
+  $('vatToggle').classList.toggle('on');
+  $('vatFields').style.display = $('vatToggle').classList.contains('on') ? 'block' : 'none';
+  calcTax();
+}
+function toggleWHT() {
+  $('whtToggle').classList.toggle('on');
+  $('whtFields').style.display = $('whtToggle').classList.contains('on') ? 'block' : 'none';
+  calcTax();
+}
+
+function setAmountMode(mode, btn) {
+  S.amountMode = mode;
+  document.querySelectorAll('.amt-mode-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  calcTax();
+}
+
+function calcTax() {
+  const inputVal  = parseFloat($('fAmount').value)||0;
+  const hasVat    = $('vatToggle').classList.contains('on');
+  const hasWHT    = $('whtToggle').classList.contains('on');
+  const vatRate   = hasVat ? parseFloat($('fVatRate').value)||7  : 0;
+  const whtRate   = hasWHT ? parseFloat($('fWhtRate').value)||3  : 0;
+
+  let base, vatAmt, whtAmt, net;
+  const isInclVat = S.amountMode === 'inclusive' && hasVat && vatRate > 0;
+
+  if(isInclVat) {
+    // ยอดที่กรอก = base + VAT → ถอย VAT ออก: VAT = total × rate / (100 + rate)
+    vatAmt = inputVal * vatRate / (100 + vatRate);
+    base   = inputVal - vatAmt;
+    whtAmt = base * (whtRate / 100);
+    net    = inputVal - whtAmt; // จ่ายจริง = ยอดรวม VAT − WHT
+  } else {
+    // ยอดที่กรอก = ยอดก่อนภาษี (รวม WHT ด้วยถ้า inclusive แต่ไม่มี VAT)
+    base   = inputVal;
+    vatAmt = base * (vatRate / 100);
+    whtAmt = base * (whtRate / 100);
+    net    = base + vatAmt - whtAmt;
+  }
+
+  // อัปเดต label และ row พิเศษสำหรับ inclusive VAT mode
+  if(isInclVat) {
+    $('netInputRow').style.display = '';
+    $('netInputAmt').textContent   = fmt(inputVal);
+    $('netBaseLabel').textContent  = 'ยอดก่อน VAT';
+  } else {
+    $('netInputRow').style.display = 'none';
+    $('netBaseLabel').textContent  = 'ยอดก่อนภาษี';
+  }
+
+  $('vatAmtShow').textContent = fmt(vatAmt);
+  $('whtAmtShow').textContent = fmt(whtAmt);
+  $('netBase').textContent    = fmt(base);
+  $('netVat').textContent     = fmt(vatAmt);
+  $('netWht').textContent     = fmt(whtAmt);
+  $('netTotal').textContent   = fmt(net);
+}
+
+// ── IMAGE HANDLING ──
+function triggerCapture(id) { $(id).click(); }
+function triggerFile(id) { $(id).click(); }
+
+function handleImages(input, type) {
+  const files = Array.from(input.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = {b64: ev.target.result, name: file.name, mimeType: file.type, url: ev.target.result, synced: false};
+      if(type==='slip') S.form.slipImgs.push(img);
+      else S.form.rcptImgs.push(img);
+      renderPrev(type);
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function renderPrev(type) {
+  const imgs = type==='slip' ? S.form.slipImgs : S.form.rcptImgs;
+  const grid = $(type+'Prev');
+  const empty = $(type+'Empty');
+  grid.innerHTML = imgs.map((img,i)=>`
+    <div class="prev-item" onclick="viewImg('${driveImgSrc(img.url)}','หลักฐาน')">
+      <img src="${driveImgSrc(img.url)}">
+      <button class="prev-rm" onclick="event.stopPropagation();removeImg('${type}',${i})">✕</button>
+    </div>
+  `).join('');
+  empty.style.display = imgs.length ? 'none' : 'block';
+}
+
+function removeImg(type, idx) {
+  const arr = type==='slip' ? S.form.slipImgs : S.form.rcptImgs;
+  const removed = arr[idx];
+  // ถ้าเป็น synced image (Drive URL) ให้เก็บ URL ไว้สำหรับลบออกจาก Drive ตอน sync
+  if(removed && removed.synced && removed.url && removed.url.startsWith('http')) {
+    if(type==='slip') S.form.removedSlipUrls.push(removed.url);
+    else              S.form.removedRcptUrls.push(removed.url);
+  }
+  arr.splice(idx, 1);
+  renderPrev(type);
+}
+
+function viewImg(url, title) {
+  $('imgvImg').src = url;
+  $('imgvTitle').textContent = title;
+  $('imgViewer').classList.add('open');
+}
+function closeImgViewer() { $('imgViewer').classList.remove('open'); }
+
+// ── SAVE / UPDATE EXPENSE ──
+async function saveExpense() {
+  const pid = $('fProject').value;
+  const proj = S.projects.find(p=>p.id===pid);
+  const aid = $('fActivity').value;
+  const act = S.activities.find(a=>a.id===aid);
+  const inputVal = parseFloat($('fAmount').value)||0;
+
+  if(!pid)              { toast('กรุณาเลือกโครงการ','err');           return; }
+  if(!aid)              { toast('กรุณาเลือกกิจกรรม','err');           return; }
+  if(!$('fCatL1').value){ toast('กรุณาเลือกประเภทค่าใช้จ่ายหลัก','err'); return; }
+  if(inputVal<=0)       { toast('กรุณากรอกจำนวนเงิน','err');          return; }
+
+  const hasVat = $('vatToggle').classList.contains('on');
+  const hasWHT = $('whtToggle').classList.contains('on');
+  const vatRate = hasVat ? parseFloat($('fVatRate').value)||7 : 0;
+  const whtRate = hasWHT ? parseFloat($('fWhtRate').value)||3 : 0;
+
+  // คำนวณตาม amountMode
+  let base, vatAmt, whtAmt, netAmt;
+  if(S.amountMode === 'inclusive' && hasVat && vatRate > 0) {
+    vatAmt = inputVal * vatRate / (100 + vatRate);
+    base   = inputVal - vatAmt;
+    whtAmt = base * (whtRate/100);
+    netAmt = inputVal - whtAmt;
+  } else {
+    base   = inputVal;
+    vatAmt = base * (vatRate/100);
+    whtAmt = base * (whtRate/100);
+    netAmt = base + vatAmt - whtAmt;
+  }
+
+  // แยกรูปใหม่ (ต้องอัปโหลด) กับรูปเก่า (มี URL แล้ว)
+  const newSlipData = S.form.slipImgs.filter(i=>!i.synced).map(i=>({b64:i.b64,name:i.name,mime:i.mimeType}));
+  const newRcptData = S.form.rcptImgs.filter(i=>!i.synced).map(i=>({b64:i.b64,name:i.name,mime:i.mimeType}));
+  const existSlipUrls = S.form.slipImgs.filter(i=>i.synced).map(i=>i.url);
+  const existRcptUrls = S.form.rcptImgs.filter(i=>i.synced).map(i=>i.url);
+
+  const isEdit = !!S.editId;
+  const id = isEdit ? S.editId : 'EXP-' + Date.now();
+
+  const expense = {
+    id, date: $('fDate').value,
+    projectId: pid, projectName: proj?.name||'',
+    activityId: aid, activityName: act?.name||'',
+    catL1: $('fCatL1').value, catL2: $('fCatL2').value, catL3: $('fCatL3').value,
+    docType: $('fDocType').value,
+    description: $('fDesc').value,
+    payment: $('fPayment').value,
+    amount: base,
+    vatRate, vatAmount: vatAmt, whtRate, whtAmount: whtAmt, netAmount: netAmt,
+    note: $('fNote').value,
+    slipUrls: [...existSlipUrls],
+    rcptUrls: [...existRcptUrls],
+    slipData: newSlipData,
+    rcptData: newRcptData,
+    removedSlipUrls: [...S.form.removedSlipUrls],  // Drive URLs ที่ถูกลบ (สำหรับ GAS delete)
+    removedRcptUrls: [...S.form.removedRcptUrls],
+    payer:   $('fPayer').value || S.session?.displayName || '',  // disabled select still has .value
+    addedBy: isEdit
+      ? (S.expenses.find(e=>e.id===id)?.addedBy || S.session?.displayName || S.session?.username || '')
+      : (S.session?.displayName || S.session?.username || ''),
+    createdAt: isEdit
+      ? (S.expenses.find(e=>e.id===id)?.createdAt || new Date().toISOString())
+      : new Date().toISOString(),
+    synced: false,
+    updatedAt: new Date().toISOString(),
+  };
+
+  if(isEdit) {
+    // ── ถ้า project / activity / date เปลี่ยน → ย้ายรูปที่ sync แล้วใน Drive ──
+    const oldExp = S.expenses.find(e=>e.id===id);
+    if(oldExp && S.config.scriptUrl) {
+      const changed = oldExp.projectId !== pid
+                   || oldExp.activityId !== aid
+                   || oldExp.date       !== expense.date;
+      if(changed) {
+        const syncedUrls = [
+          ...(oldExp.slipUrls||[]),
+          ...(oldExp.rcptUrls||[])
+        ].filter(u=>u&&u.startsWith('http'));
+        syncedUrls.forEach(url=>{
+          const fid = driveFileIdFromUrl(url);
+          if(!fid) return;
+          apiCall({
+            action:       'moveFile',
+            fileId:       fid,
+            projectId:    pid,
+            projectCode:  proj?.code || '',
+            projectName:  proj?.name || '',
+            activityId:   aid           || '',
+            activityCode: act?.code  || '',
+            activityName: act?.name  || '',
+            expenseDate:  expense.date,
+          }).catch(()=>{});
+        });
+      }
+    }
+
+    const idx = S.expenses.findIndex(e=>e.id===id);
+    if(idx>=0) S.expenses[idx] = expense;
+    else S.expenses.push(expense);
+    // อัปเดตใน pending (ถ้ายังไม่ sync)
+    S.pending = S.pending.filter(p=>p.data.id!==id);
+    S.pending.push({ type:'updateExpense', data: expense });
+  } else {
+    S.expenses.push(expense);
+    S.pending.push({ type:'addExpense', data: expense });
+  }
+  save();
+
+  const msg = isEdit ? 'อัปเดตแล้ว! กำลังซิงค์...' : 'บันทึกแล้ว! กำลังซิงค์...';
+  toast(msg, 'ok');
+  S.editId = null;
+  showView('dashboard');
+  renderDashboard();
+  if(S.config.scriptUrl) syncPending();
+}
+
+// ══════════════════════════════
+//  GOOGLE APPS SCRIPT API
+// ══════════════════════════════
+async function apiCall(payload) {
+  if(!S.config.scriptUrl) return { success:false, error:'No script URL' };
+  const res = await fetch(S.config.scriptUrl, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain'},
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+async function apiGet(params) {
+  if(!S.config.scriptUrl) return { success:false };
+  const url = S.config.scriptUrl + '?' + new URLSearchParams(params);
+  const res = await fetch(url);
+  return res.json();
+}
+
+// ── บันทึก: Push pending items ขึ้น Sheet เท่านั้น ──
+async function pushNow() {
+  if(!S.config.scriptUrl) { toast('กรุณาตั้งค่า Script URL ก่อน','err'); return; }
+  if(S.pending.length === 0) { toast('ไม่มีรายการที่รอบันทึก','ok'); return; }
+  const btn = document.getElementById('btnPush');
+  if(btn) btn.disabled = true;
+  try {
+    toast('⬆️ กำลังบันทึกขึ้น Sheet...');
+    await syncPending();
+    updateSyncPip();
+    toast('✅ บันทึกสำเร็จ', 'ok');
+  } finally {
+    if(btn) btn.disabled = false;
+  }
+}
+
+// ── Sync: Pull ข้อมูลใหม่จาก Sheet มาอัปเดต App ──
+async function pullNow() {
+  if(!S.config.scriptUrl) { toast('กรุณาตั้งค่า Script URL ก่อน','err'); return; }
+  const btn = document.getElementById('btnPull');
+  if(btn) btn.disabled = true;
+  try {
+    if(S.pending.length > 0) {
+      toast('⬆️ Push รายการค้างก่อน...');
+      await syncPending(); // push ก่อน pull เสมอ (ป้องกันข้อมูลถูก overwrite)
+    }
+    toast('⬇️ กำลังดึงข้อมูลจาก Sheet...');
+    await pullDelta();
+    try {
+      const ru = await apiGet({ action: 'getUsers' });
+      if (ru.success && ru.users && ru.users.length > 0) { _cachedUsers = ru.users; save(); }
+    } catch(_) {}
+    renderDashboard(); renderExpenseList(); populateFormSelects();
+    populateListFilters(); updateSettingsCounts();
+    toast('✅ Sync สำเร็จ', 'ok');
+  } finally {
+    if(btn) btn.disabled = false;
+  }
+}
+
+// ── Legacy syncNow (backward compat: ยังเรียกได้จาก settings / restore) ──
+async function syncNow() {
+  if(!S.config.scriptUrl) { toast('กรุณาตั้งค่า Script URL ก่อน','err'); return; }
+  // ── ลำดับที่ถูกต้อง: Push ก่อน แล้วค่อย Pull ──
+  const btn = document.querySelector('[onclick="syncNow()"]');
+  if(btn) btn.disabled = true;
+  try {
+    toast('⬆️ กำลัง Push ข้อมูล...');
+    await syncPending();            // 1. Push local changes → GAS
+    toast('⬇️ กำลัง Pull ข้อมูล...');
+    await pullDelta();              // 2. Pull changes from GAS → merge
+    // ── ดึง users list ทุกครั้งที่ sync (ให้ payer dropdown และ login ถูกต้อง) ──
+    try {
+      const ru = await apiGet({ action: 'getUsers' });
+      if (ru.success && ru.users && ru.users.length > 0) {
+        _cachedUsers = ru.users;
+        save();
+      }
+    } catch(_) {}
+    renderDashboard();
+    renderExpenseList();
+    populateFormSelects();
+    populateListFilters();
+    updateSettingsCounts();
+  } finally {
+    if(btn) btn.disabled = false;
+  }
+}
+
+// ── PULL DELTA ────────────────────────────────────────────────────────
+//  ดึงเฉพาะข้อมูลที่เปลี่ยนแปลงตั้งแต่ S.lastSyncAt (หรือ full sync ครั้งแรก)
+async function pullDelta() {
+  if(!S.config.scriptUrl) return;
+  try {
+    const since = S.lastSyncAt || '';
+    const r = await apiGet({ action: 'getDeltas', since });
+    if(!r.success) { toast('Pull ไม่สำเร็จ: '+(r.error||''), 'err'); return; }
+
+    // projects/activities/categories — full replace (admin-managed, ข้อมูลน้อย)
+    if(r.projects?.length)    S.projects    = r.projects;
+    if(r.activities?.length)  S.activities  = r.activities;
+    if(r.categories?.length)  S.categories  = r.categories;
+
+    // expenses — smart merge
+    mergeExpensesDelta(r.expenses||[], r.deletedIds||[]);
+
+    // อัปเดต timestamp
+    S.lastSyncAt = r.serverTime || new Date().toISOString();
+    save();
+
+    const newCount = (r.expenses||[]).length;
+    const delCount = (r.deletedIds||[]).length;
+    const msg = since
+      ? `✅ Pull สำเร็จ (+${newCount} รายการ${delCount?' ลบ '+delCount:''})` 
+      : `✅ Full sync สำเร็จ (${newCount} รายการ)`;
+    toast(msg, 'ok');
+  } catch(e) {
+    toast('Pull ไม่สำเร็จ — ออฟไลน์หรือ Script Error', 'err');
+  }
+}
+
+// ── MERGE EXPENSES DELTA ──────────────────────────────────────────────
+//  กฎการ merge:
+//  1. deletedIds → ลบออก local (เว้นแต่มี pending op อยู่)
+//  2. remote expense → take ถ้าไม่มี pending op บน ID นั้น
+//  3. remote expense ใหม่ (ไม่มีใน local) → เพิ่มเข้า local
+function mergeExpensesDelta(remoteList, deletedIds) {
+  const pendingIds = new Set(S.pending.map(p => p.data.id));
+
+  // 1. ลบ soft-deleted expenses (เฉพาะที่ไม่มี pending op)
+  if(deletedIds.length > 0) {
+    const delSet = new Set(deletedIds);
+    S.expenses = S.expenses.filter(e => {
+      if(delSet.has(e.id) && !pendingIds.has(e.id)) return false; // ลบออก
+      return true;
+    });
+  }
+
+  // 2. Merge remote expenses
+  remoteList.forEach(remote => {
+    if(pendingIds.has(remote.id)) return; // ข้าม — user มี unsent changes อยู่
+
+    const localIdx = S.expenses.findIndex(e => e.id === remote.id);
+    const merged   = { ...remote, synced: true };
+    // แปลง slipUrls/rcptUrls ให้เป็น array เสมอ
+    if(!Array.isArray(merged.slipUrls)) merged.slipUrls = merged.slipUrls ? String(merged.slipUrls).split(',').map(s=>s.trim()).filter(Boolean) : [];
+    if(!Array.isArray(merged.rcptUrls)) merged.rcptUrls = merged.rcptUrls ? String(merged.rcptUrls).split(',').map(s=>s.trim()).filter(Boolean) : [];
+
+    if(localIdx >= 0) {
+      // มีใน local แล้ว — เอา remote (เพราะ remote ผ่าน updatedAt filter แล้ว)
+      S.expenses[localIdx] = merged;
+    } else {
+      // รายการใหม่จาก user อื่น
+      S.expenses.push(merged);
+    }
+  });
+}
+
+// ── PUSH PENDING OPS ──────────────────────────────────────────────────
+async function syncPending() {
+  if(!S.config.scriptUrl || S.pending.length===0) return;
+  updateSyncPip();
+  const toSync = [...S.pending];
+  for(const item of toSync) {
+    try {
+      const proj = S.projects.find(p => p.id === item.data.projectId)   || {};
+      const act  = S.activities.find(a => a.id === item.data.activityId) || {};
+      const imgMeta = {
+        projectId:    item.data.projectId    || '',
+        projectName:  item.data.projectName  || proj.name || 'ไม่มีชื่อ',
+        projectCode:  proj.code              || item.data.projectId || '',
+        activityId:   item.data.activityId   || '',
+        activityCode: act.code               || '',
+        activityName: item.data.activityName || act.name || '',
+        expenseDate:  item.data.date         || '',
+      };
+
+      // อัปโหลดรูปสลิป
+      const slip = [];
+      for(const img of (item.data.slipData||[])) {
+        const r = await apiCall({ action:'uploadImage', imageBase64:img.b64, filename:img.name, mimeType:img.mime, fileType:'slip', ...imgMeta });
+        slip.push(r.success ? r.url : '');
+      }
+      // อัปโหลดรูปใบเสร็จ
+      const rcpt = [];
+      for(const img of (item.data.rcptData||[])) {
+        const r = await apiCall({ action:'uploadImage', imageBase64:img.b64, filename:img.name, mimeType:img.mime, fileType:'rcpt', ...imgMeta });
+        rcpt.push(r.success ? r.url : '');
+      }
+      // ลบรูปเก่าใน Drive
+      for(const url of (item.data.removedSlipUrls||[])) {
+        const fid = driveFileIdFromUrl(url);
+        if(fid) await apiCall({action:'deleteImage', fileId: fid}).catch(()=>{});
+      }
+      for(const url of (item.data.removedRcptUrls||[])) {
+        const fid = driveFileIdFromUrl(url);
+        if(fid) await apiCall({action:'deleteImage', fileId: fid}).catch(()=>{});
+      }
+
+      const finalSlipUrls = [...toUrlArray(item.data.slipUrls), ...slip];
+      const finalRcptUrls = [...toUrlArray(item.data.rcptUrls), ...rcpt];
+
+      const expToSend = {...item.data, slipUrls: finalSlipUrls, rcptUrls: finalRcptUrls};
+      delete expToSend.slipData;
+      delete expToSend.rcptData;
+      delete expToSend.removedSlipUrls;
+      delete expToSend.removedRcptUrls;
+
+      const action = item.type === 'updateExpense' ? 'updateExpense' : 'addExpense';
+      const r = await apiCall({action, expense: expToSend});
+      if(r.success) {
+        const idx = S.expenses.findIndex(e=>e.id===item.data.id);
+        if(idx>=0) {
+          S.expenses[idx].synced    = true;
+          S.expenses[idx].slipUrls  = finalSlipUrls;
+          S.expenses[idx].rcptUrls  = finalRcptUrls;
+          S.expenses[idx].updatedAt = r.updatedAt || new Date().toISOString();
+          delete S.expenses[idx].slipData;
+          delete S.expenses[idx].rcptData;
+          delete S.expenses[idx].removedSlipUrls;
+          delete S.expenses[idx].removedRcptUrls;
+        }
+        S.pending = S.pending.filter(p=>p.data.id!==item.data.id);
+        save();
+      }
+    } catch(e) { break; }
+  }
+  updateSyncPip();
+}
+
+// ── Legacy syncData (ถูกใช้จาก restoreBackup) ────────────────────────
+async function syncData() {
+  await pullDelta();
+}
+
+// ══════════════════════════════
+//  SETTINGS
+// ══════════════════════════════
+function renderSettings() {
+  $('scriptUrl').value = S.config.scriptUrl||'';
+  if($('loginScriptUrl')) $('loginScriptUrl').value = S.config.scriptUrl||'';
+  updateSettingsCounts();
+  renderBackupList();
+  applyRoleUI();
+}
+
+function updateSettingsCounts() {
+  $('projCount').textContent = S.projects.length + ' โครงการ';
+  $('actCount').textContent = S.activities.length + ' กิจกรรม';
+  $('catCount').textContent = S.categories.length + ' รายการ';
+  $('userCount').textContent = (_cachedUsers.length || '—') + ' ผู้ใช้';
+}
+
+function saveConfig() {
+  S.config.scriptUrl = $('scriptUrl').value.trim();
+  localStorage.setItem('fex_script_url', S.config.scriptUrl); // sync key เดียวกับหน้า Login
+  save();
+  toast('บันทึกการตั้งค่าแล้ว','ok');
+}
+
+async function testConnection() {
+  const url = $('scriptUrl').value.trim();
+  if(!url) { toast('กรุณากรอก URL','err'); return; }
+  try {
+    toast('กำลังทดสอบ...');
+    const r = await fetch(url+'?action=ping');
+    const d = await r.json();
+    if(d.success||d.pong) toast('เชื่อมต่อสำเร็จ ✓','ok');
+    else toast('ตอบกลับแล้ว แต่รูปแบบผิด','err');
+  } catch(e) { toast('เชื่อมต่อไม่ได้: ' + e.message,'err'); }
+}
+
+async function setupSheets() {
+  if(!isAdmin()) { toast('เฉพาะ Admin เท่านั้น','err'); return; }
+  if(!S.config.scriptUrl) { toast('กรุณาตั้งค่า Script URL ก่อน','err'); return; }
+  try {
+    toast('กำลังสร้าง Sheets...');
+    const r = await apiCall({action:'setupSheets'});
+    if(r.success) toast('สร้าง Sheets สำเร็จ ✓','ok');
+    else toast('ผิดพลาด: '+(r.error||''),'err');
+  } catch(e) { toast('เชื่อมต่อไม่ได้','err'); }
+}
+
+function clearLocalData() {
+  if(!confirm('ล้างข้อมูล cache ในเครื่อง? (ข้อมูลใน Google Sheet ยังอยู่)')) return;
+  // เก็บ Backup ไว้ ไม่ลบตาม
+  const bk = localStorage.getItem('fieldExpBackups');
+  localStorage.clear();
+  if(bk) localStorage.setItem('fieldExpBackups', bk);
+  location.reload();
+}
+
+// ══════════════════════════════
+//  BACKUP SYSTEM
+// ══════════════════════════════
+const BACKUP_KEY = 'fieldExpBackups';
+const BACKUP_MAX = 3;
+let _cloudBkCache = null; // cache cloud backup list หลังโหลดครั้งแรก
+
+// ══════════════════════════════
+//  สร้าง Backup: บันทึกทั้ง localStorage (ทันที) และ Drive (async)
+// ══════════════════════════════
+function createBackup(silent) {
+  if(!silent && !isAdmin()) { toast('เฉพาะ Admin เท่านั้นที่สำรองข้อมูลได้','err'); return; }
+  const snap = {
+    ts:         Date.now(),
+    projects:   JSON.parse(JSON.stringify(S.projects)),
+    activities: JSON.parse(JSON.stringify(S.activities)),
+    categories: JSON.parse(JSON.stringify(S.categories)),
+    expenses:   JSON.parse(JSON.stringify(S.expenses)),
+    config:     JSON.parse(JSON.stringify(S.config)),
+  };
+
+  // ── บันทึก localStorage เสมอ (ทันที, ใช้ได้ offline) ──
+  let localList = _loadLocalBackups();
+  localList.unshift(snap);
+  if(localList.length > BACKUP_MAX) localList = localList.slice(0, BACKUP_MAX);
+  localStorage.setItem(BACKUP_KEY, JSON.stringify(localList));
+
+  // ── บันทึก Cloud (Drive) ถ้ามี GAS URL ──
+  if(S.config.scriptUrl) {
+    // strip base64 images เพื่อลดขนาดไฟล์ (รูปที่ยัง sync ไม่ได้ใช้ข้ามเครื่องไม่ได้อยู่แล้ว)
+    const snapCloud = {
+      ...snap,
+      expenses: snap.expenses.map(({ slipData, rcptData, ...rest }) => rest),
+    };
+    let cloudList = (_cloudBkCache || []).slice();
+    cloudList.unshift(snapCloud);
+    if(cloudList.length > BACKUP_MAX) cloudList = cloudList.slice(0, BACKUP_MAX);
+    _cloudBkCache = cloudList;
+
+    apiCall({ action: 'cloudBackupSave', data: JSON.stringify(cloudList) })
+      .then(() => {
+        if(!silent) toast(`☁️ สำรองไป Drive แล้ว — ${S.expenses.length} รายการ · ${S.projects.length} โครงการ`, 'ok');
+        renderBackupList();
+      })
+      .catch(() => {
+        if(!silent) toast(`💾 สำรองในเครื่องแล้ว (Drive ไม่ตอบสนอง)`, 'ok');
+        renderBackupList();
+      });
+  } else {
+    if(!silent) toast(`💾 สำรองในเครื่องแล้ว — ตั้งค่า Script URL เพื่อ sync ไป Drive`, 'ok');
+    renderBackupList();
+  }
+}
+
+// ── โหลด backup list จาก localStorage ──
+function _loadLocalBackups() {
+  try { return JSON.parse(localStorage.getItem(BACKUP_KEY)||'[]'); }
+  catch(_) { return []; }
+}
+
+// ══════════════════════════════
+//  แสดงรายการ Backup (async: โหลดจาก Drive ก่อน, fallback localStorage)
+// ══════════════════════════════
+async function renderBackupList() {
+  const el = $('backupList');
+  if(!el) return;
+
+  if(S.config.scriptUrl) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:10px 0">⏳ กำลังโหลด Backup จาก Drive...</div>';
+    try {
+      const r = await apiCall({ action: 'cloudBackupLoad' });
+      if(r.success && r.backups?.length > 0) {
+        _cloudBkCache = r.backups;
+        _renderBkItems(r.backups, 'cloud');
+        return;
+      }
+      // Drive ไม่มี backup (ยังไม่เคย backup ไป cloud)
+      if(r.success && r.backups?.length === 0) {
+        _cloudBkCache = [];
+        const local = _loadLocalBackups();
+        if(local.length > 0) {
+          _renderBkItems(local, 'local');
+        } else {
+          el.innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:10px 0">ยังไม่มี Backup<br><span style="font-size:11px">กด "☁️ สำรองข้อมูลตอนนี้" เพื่อเริ่มต้น</span></div>';
+        }
+        return;
+      }
+    } catch(_) {}
+    // Drive error → fallback localStorage
+  }
+
+  // Fallback: แสดง local backup
+  const local = _loadLocalBackups();
+  _cloudBkCache = null;
+  if(local.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:10px 0">ยังไม่มี Backup</div>';
+    return;
+  }
+  _renderBkItems(local, 'local');
+}
+
+function _renderBkItems(bkList, src) {
+  const el = $('backupList');
+  if(!el) return;
+  const isCloud = src === 'cloud';
+  const srcBadge = isCloud
+    ? '<span style="background:#EFF6FF;color:#1D4ED8;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px">☁️ Drive</span>'
+    : '<span style="background:#FFFBEB;color:#B45309;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px">💾 เครื่อง</span>';
+
+  el.innerHTML = `<div style="font-size:11px;color:var(--muted);margin-bottom:8px;display:flex;align-items:center">แหล่งข้อมูล ${srcBadge}${isCloud?'':' <span style="margin-left:6px;color:var(--amber)">· ตั้งค่า Script URL เพื่อ sync ไป Drive</span>'}</div>` +
+    bkList.map((b, i) => {
+      const dt  = new Date(b.ts);
+      const day = dt.toLocaleDateString('th-TH', {year:'numeric', month:'short', day:'numeric'});
+      const tm  = dt.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
+      const exp = b.expenses?.length   || 0;
+      const prj = b.projects?.length   || 0;
+      const act = b.activities?.length || 0;
+      return `<div class="bk-item">
+        <div class="bk-num">${i+1}</div>
+        <div class="bk-info">
+          <div class="bk-date">${day} ${tm}</div>
+          <div class="bk-meta">${exp} รายการ · ${prj} โครงการ · ${act} กิจกรรม</div>
+        </div>
+        <button class="bk-btn restore" onclick="restoreBackup(${i},'${src}')">กู้คืน</button>
+        <button class="bk-btn del"     onclick="deleteBackup(${i},'${src}')">✕</button>
+      </div>`;
+    }).join('');
+}
+
+// ══════════════════════════════
+//  กู้คืน Backup
+// ══════════════════════════════
+async function restoreBackup(idx, src) {
+  if(!isAdmin()) { toast('เฉพาะ Admin เท่านั้นที่กู้คืนข้อมูลได้','err'); return; }
+  let bkList;
+  if(src === 'cloud') {
+    if(_cloudBkCache) {
+      bkList = _cloudBkCache;
+    } else {
+      toast('กำลังโหลดจาก Drive...', 'ok');
+      try {
+        const r = await apiCall({ action: 'cloudBackupLoad' });
+        bkList = r.backups || [];
+        _cloudBkCache = bkList;
+      } catch(_) { bkList = _loadLocalBackups(); }
+    }
+  } else {
+    bkList = _loadLocalBackups();
+  }
+
+  const b = bkList[idx];
+  if(!b) return;
+  const dt     = new Date(b.ts).toLocaleString('th-TH');
+  const srcTxt = src === 'cloud' ? '☁️ Drive' : '💾 เครื่อง';
+  if(!confirm(`กู้คืน Backup ลำดับที่ ${idx+1} จาก ${srcTxt}\n(${dt})\n\nข้อมูลปัจจุบันจะถูกแทนที่ทั้งหมด`)) return;
+
+  // Auto-backup ก่อน restore (silent)
+  createBackup(true);
+
+  S.projects    = b.projects    || [];
+  S.activities  = b.activities  || [];
+  S.categories  = b.categories  || [];
+  S.expenses    = b.expenses    || [];
+  S.config      = b.config      || S.config;
+  S.pending     = [];
+  S.currentProj = null;
+  S.currentAct  = null;
+  save();
+  renderDashboard(); renderExpenseList(); renderSettings();
+  populateFormSelects(); populateListFilters();
+  toast('✅ กู้คืนข้อมูลสำเร็จ', 'ok');
+}
+
+// ══════════════════════════════
+//  ลบ Backup
+// ══════════════════════════════
+async function deleteBackup(idx, src) {
+  if(!confirm(`ลบ Backup ลำดับที่ ${idx+1}?`)) return;
+
+  if(src === 'cloud') {
+    let cloudList = (_cloudBkCache || []).slice();
+    cloudList.splice(idx, 1);
+    _cloudBkCache = cloudList;
+    if(S.config.scriptUrl) {
+      await apiCall({ action: 'cloudBackupSave', data: JSON.stringify(cloudList) }).catch(()=>{});
+    }
+  } else {
+    let localList = _loadLocalBackups();
+    localList.splice(idx, 1);
+    localStorage.setItem(BACKUP_KEY, JSON.stringify(localList));
+  }
+  renderBackupList();
+  toast('ลบ Backup แล้ว', 'ok');
+}
+
+// ══════════════════════════════
+//  PROJECT & ACTIVITY
+// ══════════════════════════════
+function renderProjModal() {
+  const el = $('modalProjList');
+  const all = {id:'', name:'ทุกโครงการ', code:'แสดงทั้งหมด'};
+  const items = [all, ...S.projects];
+  el.innerHTML = items.map(p=>`
+    <div class="modal-list-item" onclick="selectProject('${p.id}')">
+      <span class="ico">📁</span>
+      <div class="info"><div class="name">${p.name}</div><div class="sub">${p.code||''}</div></div>
+      ${(S.currentProj?.id||'')===(p.id)?'<span class="chk">✓</span>':''}
+    </div>
+  `).join('');
+}
+
+function selectProject(id) {
+  S.currentProj = id ? S.projects.find(p=>p.id===id)||null : null;
+  save();
+  closeModal('modalProject');
+  renderDashboard();
+}
+
+function renderProjList() {
+  $('projList').innerHTML = S.projects.length===0
+    ? '<div style="font-size:13px;color:var(--muted);margin-bottom:12px">ยังไม่มีโครงการ</div>'
+    : S.projects.map(p=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:500">${p.name}</div>
+          <div style="font-size:12px;color:var(--muted)">${p.code||''} · งบ ${fmt(parseFloat(p.budget)||0)}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;margin-left:8px">
+          <button onclick="editProject('${p.id}')" style="color:var(--primary);border:1px solid var(--primary);background:var(--primary-lt);font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit">✏️ แก้ไข</button>
+          ${isAdmin() ? `<button onclick="removeProject('${p.id}')" style="color:var(--red);border:none;background:none;font-size:18px;cursor:pointer;padding:0 4px">✕</button>` : ''}
+        </div>
+      </div>`).join('');
+}
+
+function removeProject(id) {
+  const proj = S.projects.find(p=>p.id===id);
+  if(!proj) return;
+  const relActs = S.activities.filter(a=>a.projectId===id);
+  const relExp  = S.expenses.filter(e=>e.projectId===id);
+  const msg = (relExp.length > 0 || relActs.length > 0)
+    ? `ลบโครงการ "${proj.name}"?\n\nจะลบกิจกรรม ${relActs.length} รายการ และค่าใช้จ่าย ${relExp.length} รายการ\nรูปที่ sync แล้วใน Google Drive จะถูกย้ายไป Trash`
+    : `ลบโครงการ "${proj.name}"?`;
+  if(!confirm(msg)) return;
+
+  // Cascade: ลบ Drive images ของทุก expense ที่เกี่ยวข้อง
+  _cascadeDeleteExpenses(relExp);
+
+  // อัปเดต Google Sheets: ลบแถวโครงการ + กิจกรรมที่เกี่ยวข้อง
+  if(S.config.scriptUrl) {
+    apiCall({action:'deleteProject', id}).catch(()=>{});
+    relActs.forEach(a => apiCall({action:'deleteActivity', id:a.id}).catch(()=>{}));
+    // ลบโฟลเดอร์โครงการใน Drive (จะลบทุกอย่างข้างใน)
+    apiCall({
+      action: 'deleteProjectFolder',
+      projectId:   proj.id    || '',
+      projectCode: proj.code  || '',
+      projectName: proj.name  || '',
+    }).catch(()=>{});
+  }
+
+  S.activities = S.activities.filter(a=>a.projectId!==id);
+  S.projects   = S.projects.filter(p=>p.id!==id);
+  if(S.currentProj?.id===id) S.currentProj=null;
+  save(); renderProjList(); renderActList(); updateSettingsCounts();
+  renderDashboard(); renderExpenseList();
+  toast(`ลบโครงการ "${proj.name}" แล้ว`, 'ok');
+}
+
+// ── ตัวแปร track edit state ──
+let _editProjId = null;
+let _editActId  = null;
+
+// ── แก้ไขโครงการ: เติมฟอร์มแล้วสลับโหมด ──
+function editProject(id) {
+  const p = S.projects.find(x=>x.id===id);
+  if(!p) return;
+  _editProjId = id;
+  $('newProjName').value   = p.name   || '';
+  $('newProjCode').value   = p.code   || '';
+  $('newProjBudget').value = p.budget || '';
+  $('projFormTitle').textContent   = '✏️ แก้ไขโครงการ';
+  $('projSaveBtn').textContent     = '💾 บันทึกการแก้ไข';
+  $('projCancelRow').style.display = '';
+  $('projSaveBtn').style.background = 'var(--amber)';
+  $('newProjName').focus();
+}
+
+function cancelEditProject() {
+  _editProjId = null;
+  $('newProjName').value = ''; $('newProjCode').value = ''; $('newProjBudget').value = '';
+  $('projFormTitle').textContent   = 'เพิ่มโครงการใหม่';
+  $('projSaveBtn').textContent     = 'เพิ่มโครงการ';
+  $('projCancelRow').style.display = 'none';
+  $('projSaveBtn').style.background = '';
+}
+
+async function saveProject() {
+  const name   = $('newProjName').value.trim();
+  const code   = $('newProjCode').value.trim().toUpperCase();
+  const budget = parseFloat($('newProjBudget').value) || 0;
+  if(!name) { toast('กรุณากรอกชื่อโครงการ','err'); return; }
+
+  if(_editProjId) {
+    // ── โหมดแก้ไข ──
+    const proj = S.projects.find(p=>p.id===_editProjId);
+    if(!proj) return;
+    proj.name   = name;
+    proj.code   = code;
+    proj.budget = budget;
+    if(S.config.scriptUrl) {
+      apiCall({action:'updateProject', project: {id:proj.id, name, code, budget}}).catch(()=>{});
+    }
+    // อัปเดต projectName ใน expenses ที่เกี่ยวข้อง
+    S.expenses.forEach(e => { if(e.projectId===_editProjId) e.projectName = name; });
+    cancelEditProject();
+    save(); renderProjList(); renderDashboard(); renderExpenseList();
+    toast('แก้ไขโครงการแล้ว','ok');
+  } else {
+    // ── โหมดเพิ่มใหม่ ──
+    const id = 'PRJ-' + Date.now();
+    const proj = { id, name, code, budget };
+    S.projects.push(proj);
+    if(S.config.scriptUrl) {
+      apiCall({action:'addProject', project: proj}).catch(()=>{});
+    }
+    $('newProjName').value = ''; $('newProjCode').value = ''; $('newProjBudget').value = '';
+    save(); renderProjList(); populateFormSelects(); updateSettingsCounts();
+    renderDashboard();
+    toast('เพิ่มโครงการแล้ว','ok');
+  }
+}
+
+// ══════════════════════════════
+//  ACTIVITY LIST (in modal)
+// ══════════════════════════════
+function renderActList() {
+  const el = $('actList');
+  if(!el) return;
+  const acts = _editActId ? S.activities : S.activities;
+  if(S.activities.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--muted);margin-bottom:12px">ยังไม่มีกิจกรรม</div>';
+    return;
+  }
+  el.innerHTML = S.activities.map(a => {
+    const proj = S.projects.find(p=>p.id===a.projectId);
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:500">${a.name||''}</div>
+        <div style="font-size:12px;color:var(--muted)">${a.code||''} · ${proj?proj.name:''} · งบ ${fmt(parseFloat(a.budget)||0)}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;margin-left:8px">
+        <button onclick="editActivity('${a.id}')" style="color:var(--primary);border:1px solid var(--primary);background:var(--primary-lt);font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit">✏️ แก้ไข</button>
+        ${isAdmin() ? `<button onclick="removeActivity('${a.id}')" style="color:var(--red);border:none;background:none;font-size:18px;cursor:pointer;padding:0 4px">✕</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function populateActProjSelect() {
+  const sel = $('newActProject');
+  if(!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— เลือกโครงการ —</option>' +
+    S.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  if(prev && S.projects.find(p=>p.id===prev)) sel.value = prev;
+}
+
+function removeActivity(id) {
+  const act = S.activities.find(a=>a.id===id);
+  if(!act) return;
+  const relExp = S.expenses.filter(e=>e.activityId===id);
+  const msg = relExp.length > 0
+    ? `ลบกิจกรรม "${act.name}"?\n\nจะลบค่าใช้จ่าย ${relExp.length} รายการ\nรูปที่ sync แล้วใน Google Drive จะถูกย้ายไป Trash`
+    : `ลบกิจกรรม "${act.name}"?`;
+  if(!confirm(msg)) return;
+
+  _cascadeDeleteExpenses(relExp);
+
+  if(S.config.scriptUrl) {
+    apiCall({action:'deleteActivity', id}).catch(()=>{});
+  }
+
+  S.activities = S.activities.filter(a=>a.id!==id);
+  save(); renderActList(); populateFormSelects(); updateSettingsCounts();
+  renderDashboard(); renderExpenseList();
+  toast(`ลบกิจกรรม "${act.name}" แล้ว`, 'ok');
+}
+
+function editActivity(id) {
+  const a = S.activities.find(x=>x.id===id);
+  if(!a) return;
+  _editActId = id;
+  populateActProjSelect();
+  $('newActProject').value = a.projectId || '';
+  $('newActCode').value    = a.code      || '';
+  $('newActName').value    = a.name      || '';
+  $('newActBudget').value  = a.budget    || '';
+  $('actFormTitle').textContent   = '✏️ แก้ไขกิจกรรม';
+  $('actSaveBtn').textContent     = '💾 บันทึกการแก้ไข';
+  $('actCancelRow').style.display = '';
+  $('actSaveBtn').style.background = 'var(--amber)';
+  $('newActName').focus();
+}
+
+function cancelEditActivity() {
+  _editActId = null;
+  $('newActProject').value = ''; $('newActCode').value = '';
+  $('newActName').value = ''; $('newActBudget').value = '';
+  $('actFormTitle').textContent   = 'เพิ่มกิจกรรมใหม่';
+  $('actSaveBtn').textContent     = 'เพิ่มกิจกรรม';
+  $('actCancelRow').style.display = 'none';
+  $('actSaveBtn').style.background = '';
+}
+
+async function saveActivity() {
+  const projId = $('newActProject').value;
+  const code   = $('newActCode').value.trim().toUpperCase();
+  const name   = $('newActName').value.trim();
+  const budget = parseFloat($('newActBudget').value) || 0;
+  if(!projId) { toast('กรุณาเลือกโครงการ','err'); return; }
+  if(!name)   { toast('กรุณากรอกชื่อกิจกรรม','err'); return; }
+
+  if(_editActId) {
+    // ── โหมดแก้ไข ──
+    const act = S.activities.find(a=>a.id===_editActId);
+    if(!act) return;
+    act.projectId = projId;
+    act.code      = code;
+    act.name      = name;
+    act.budget    = budget;
+    if(S.config.scriptUrl) {
+      apiCall({action:'updateActivity', activity: {id:act.id, projectId:projId, code, name, budget}}).catch(()=>{});
+    }
+    // อัปเดต activityName ใน expenses ที่เกี่ยวข้อง
+    S.expenses.forEach(e => { if(e.activityId===_editActId) e.activityName = name; });
+    cancelEditActivity();
+    save(); renderActList(); populateFormSelects(); renderDashboard(); renderExpenseList();
+    toast('แก้ไขกิจกรรมแล้ว','ok');
+  } else {
+    // ── โหมดเพิ่มใหม่ ──
+    const id = 'ACT-' + Date.now();
+    const act = { id, projectId: projId, code, name, budget };
+    S.activities.push(act);
+    if(S.config.scriptUrl) {
+      apiCall({action:'addActivity', activity: act}).catch(()=>{});
+    }
+    $('newActProject').value = ''; $('newActCode').value = '';
+    $('newActName').value = ''; $('newActBudget').value = '';
+    save(); renderActList(); populateFormSelects(); updateSettingsCounts();
+    renderDashboard();
+    toast('เพิ่มกิจกรรมแล้ว','ok');
+  }
+}
+
+// ══════════════════════════════
+//  LOGIN URL (หน้า Login)
+// ══════════════════════════════
+function toggleLoginUrl() {
+  const p = $('loginUrlPanel');
+  if(!p) return;
+  const show = p.style.display === 'none';
+  p.style.display = show ? 'block' : 'none';
+  if(show) {
+    $('loginScriptUrl').value = S.config.scriptUrl || '';
+    $('loginScriptUrl').focus();
+    updateLoginUrlStatus();
+  }
+}
+
+function saveLoginUrl() {
+  const url = ($('loginScriptUrl')?.value || '').trim();
+  S.config.scriptUrl = url;
+  localStorage.setItem('fex_script_url', url);
+  updateLoginUrlStatus();
+}
+
+function updateLoginUrlStatus() {
+  const el = $('loginUrlStatus');
+  if(!el) return;
+  el.textContent = S.config.scriptUrl
+    ? '✅ URL ตั้งค่าแล้ว'
+    : '⚠️ ยังไม่มี URL — จะใช้ offline mode';
+  el.style.color = S.config.scriptUrl ? 'var(--green)' : 'var(--amber)';
+}
+
+// ── โหลด Script URL จาก localStorage ตั้งแต่เริ่มต้น — เรียกหลัง S init ──
+function _initScriptUrl() {
+  const direct = localStorage.getItem('fex_script_url');
+  if(direct) { S.config.scriptUrl = direct; return; }
+  const saved = localStorage.getItem('fex_config');
+  if(saved) try { const c = JSON.parse(saved); if(c.scriptUrl) S.config.scriptUrl = c.scriptUrl; } catch(_) {}
+}
+
+// ══════════════════════════════
+//  CATEGORIES MODAL (Admin CRUD)
+// ══════════════════════════════
+function renderCatModal() {
+  const el = $('catModalList');
+  if(!el) return;
+  const badge = $('catCountBadge');
+  if(badge) badge.textContent = S.categories.length + ' รายการ';
+
+  if(!S.categories || S.categories.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:16px">ไม่มีข้อมูลหมวดหมู่<br><span style="font-size:11px">เพิ่มได้จากฟอร์มด้านล่าง</span></div>';
+    return;
+  }
+
+  // Group by l1
+  const grouped = {};
+  S.categories.forEach(c => {
+    const l1 = c.l1||c.catL1||'';
+    if(!grouped[l1]) grouped[l1] = [];
+    grouped[l1].push(c);
+  });
+
+  el.innerHTML = Object.entries(grouped).map(([l1, items]) => `
+    <div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:6px;padding:6px 10px;margin-bottom:4px">
+        <div style="font-weight:700;font-size:13px;color:var(--text)">${l1}</div>
+        <button onclick="deleteCatGroup('${l1.replace(/'/g,"\\'")}'')" style="background:none;border:none;color:var(--red);font-size:11px;cursor:pointer;font-family:inherit;padding:2px 6px">ลบทั้งกลุ่ม</button>
+      </div>
+      ${items.map(c => {
+        const l2 = c.l2||c.catL2||'';
+        const l3 = c.l3||c.catL3||'';
+        const key = encodeURIComponent(l1+'|'+l2+'|'+l3);
+        return `<div style="display:flex;align-items:center;padding:4px 10px 4px 22px;border-bottom:1px solid var(--border)">
+          <div style="flex:1;font-size:12px;color:var(--text)">${l2}${l3?' <span style="color:var(--muted)">/ '+l3+'</span>':''}</div>
+          <button onclick="deleteCatItem('${key}')" style="background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;padding:2px 6px" title="ลบ">🗑️</button>
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+async function addCategory() {
+  const l1 = ($('newCatL1')?.value||'').trim();
+  const l2 = ($('newCatL2')?.value||'').trim();
+  const l3 = ($('newCatL3')?.value||'').trim();
+  if(!l1 || !l2) { toast('กรุณากรอกหมวดหลัก และหมวดรอง','err'); return; }
+  const cat = { l1, l2, l3 };
+  // เพิ่มใน local state
+  S.categories.push(cat);
+  save();
+  // push ขึ้น GAS
+  if(S.config.scriptUrl) {
+    try { await apiCall({ action: 'addCategory', category: cat }); }
+    catch(_) { toast('บันทึกไว้ local แล้ว (sync ภายหลัง)','ok'); }
+  }
+  // clear form
+  $('newCatL1').value=''; $('newCatL2').value=''; $('newCatL3').value='';
+  renderCatModal();
+  populateFormSelects();
+  $('catCount').textContent = S.categories.length + ' รายการ';
+  toast('เพิ่มหมวดหมู่แล้ว','ok');
+}
+
+async function deleteCatItem(encodedKey) {
+  const parts = decodeURIComponent(encodedKey).split('|');
+  const [l1,l2,l3] = parts;
+  if(!confirm(`ลบ "${l2}${l3?' / '+l3:''}" ออก?`)) return;
+  S.categories = S.categories.filter(c => {
+    const cl1=c.l1||c.catL1||'', cl2=c.l2||c.catL2||'', cl3=c.l3||c.catL3||'';
+    return !(cl1===l1 && cl2===l2 && cl3===l3);
+  });
+  save();
+  if(S.config.scriptUrl) {
+    try { await apiCall({ action:'deleteCategory', category:{l1,l2,l3} }); } catch(_) {}
+  }
+  renderCatModal();
+  populateFormSelects();
+  $('catCount').textContent = S.categories.length + ' รายการ';
+  toast('ลบแล้ว','ok');
+}
+
+async function deleteCatGroup(l1) {
+  const count = S.categories.filter(c=>(c.l1||c.catL1||'')===l1).length;
+  if(!confirm(`ลบหมวด "${l1}" ทั้งหมด ${count} รายการ?`)) return;
+  S.categories = S.categories.filter(c=>(c.l1||c.catL1||'')!==l1);
+  save();
+  if(S.config.scriptUrl) {
+    try { await apiCall({ action:'deleteCategoryGroup', l1 }); } catch(_) {}
+  }
+  renderCatModal();
+  populateFormSelects();
+  $('catCount').textContent = S.categories.length + ' รายการ';
+  toast('ลบกลุ่มหมวดหมู่แล้ว','ok');
+}
+
+// ══════════════════════════════
+//  PURGE DELETED RECORDS
+// ══════════════════════════════
+async function openPurgeDialog() {
+  if(!S.config.scriptUrl) { toast('กรุณาตั้งค่า Script URL ก่อน','err'); return; }
+  // นับรายการ soft-deleted ใน local cache
+  const deleted = S.expenses.filter(e => e.deletedAt || false);
+  // ขอข้อมูลจาก Sheet
+  const info = $('purgeInfo');
+  if(info) info.innerHTML = '⏳ กำลังตรวจสอบข้อมูลจาก Sheet...';
+  openModal('modalPurge');
+  try {
+    const r = await apiGet({ action: 'countDeleted' });
+    const sheetCount = r.success ? (r.count||0) : '?';
+    if(info) info.innerHTML =
+      `<b>รายการที่ถูก soft-delete ใน Sheet:</b> ${sheetCount} รายการ<br>` +
+      `<b>ใน local cache:</b> ${deleted.length} รายการ<br><br>` +
+      `การลบถาวรจะลบ row ออกจาก Google Sheet จริงๆ ` +
+      `และ local cache จะถูก sync ใหม่หลัง Purge`;
+  } catch(_) {
+    if(info) info.innerHTML = 'ไม่สามารถดึงข้อมูลจาก Sheet ได้ — ตรวจสอบ Script URL';
+  }
+}
+
+async function executePurge() {
+  const days = parseInt($('purgeDays')?.value||'90');
+  const btn = $('purgeConfirmBtn');
+  if(btn) { btn.disabled = true; btn.textContent = '⏳ กำลังลบ...'; }
+  try {
+    const r = await apiCall({ action: 'purgeDeleted', olderThanDays: days });
+    if(!r.success) { toast('Purge ไม่สำเร็จ: '+(r.error||''), 'err'); return; }
+    toast(`✅ ลบถาวรแล้ว ${r.purged||0} รายการ`, 'ok');
+    closeModal('modalPurge');
+    // reset lastSyncAt เพื่อ force full pull (เพราะ row IDs หายไปแล้ว)
+    S.lastSyncAt = null;
+    save();
+    // pull ใหม่
+    await pullDelta();
+    renderDashboard(); renderExpenseList();
+    $('purgeDesc').textContent = `ล้างล่าสุด: ลบ ${r.purged||0} รายการ`;
+  } catch(e) {
+    toast('เกิดข้อผิดพลาด: '+e.message, 'err');
+  } finally {
+    if(btn) { btn.disabled = false; btn.textContent = '🗑️ ลบถาวร'; }
+  }
+}
+
+// ══════════════════════════════
+//  CONNECTION STATUS
+// ══════════════════════════════
+function updateConnStatus() {
+  const online  = navigator.onLine;
+  const hasUrl  = !!S.config.scriptUrl;
+  const pip     = $('syncPip');
+  const offBar  = $('offlineBar');
+  if(pip) {
+    pip.style.background = online && hasUrl ? 'var(--green)' : online ? 'var(--amber)' : '#9CA3AF';
+    pip.title = online && hasUrl ? 'ออนไลน์' : online ? 'ยังไม่ตั้งค่า URL' : 'ออฟไลน์';
+  }
+  if(offBar) offBar.style.display = online ? 'none' : '';
+}
+
+function updateSyncPip() {
+  // badge บนปุ่ม Push
+  const badge = document.getElementById('pendingBadge');
+  if(badge) {
+    if(S.pending.length > 0) {
+      badge.textContent = S.pending.length > 9 ? '9+' : S.pending.length;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+  const pip = $('syncPip');
+  if(!pip) return;
+  if(S.pending.length > 0) {
+    pip.style.background = 'var(--amber)';
+    pip.title = `รอ sync ${S.pending.length} รายการ`;
+  } else {
+    updateConnStatus();
+  }
+}
+
+// ══════════════════════════════
+//  UTILITY FUNCTIONS
+// ══════════════════════════════
+function $(id) { return document.getElementById(id); }
+
+function fmt(n) {
+  if(isNaN(n)) return '0';
+  return n.toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function fmtDate(d) {
+  if(!d) return '';
+  try {
+    const dt = new Date(d);
+    if(isNaN(dt)) return d;
+    return dt.toLocaleDateString('th-TH', {year:'numeric', month:'short', day:'numeric'});
+  } catch(_) { return d; }
+}
+
+function toUrlArray(val) {
+  if(!val) return [];
+  if(Array.isArray(val)) return val.filter(Boolean);
+  if(typeof val === 'string') {
+    // ถ้าเป็น data: URL หรือ https: URL เดี่ยวๆ
+    if(val.startsWith('data:') || val.startsWith('http')) return [val];
+    try { const a = JSON.parse(val); return Array.isArray(a) ? a.filter(Boolean) : [val].filter(Boolean); }
+    catch(_) { return val.split(',').map(s=>s.trim()).filter(Boolean); }
+  }
+  return [];
+}
+
+function driveFileIdFromUrl(url) {
+  if(!url) return null;
+  // https://drive.google.com/file/d/FILE_ID/view
+  const m1 = url.match(/\/file\/d\/([^/]+)/);
+  if(m1) return m1[1];
+  // https://drive.google.com/open?id=FILE_ID
+  const m2 = url.match(/[?&]id=([^&]+)/);
+  if(m2) return m2[1];
+  return null;
+}
+
+function driveImgSrc(url) {
+  if(!url) return '';
+  if(url.startsWith('data:')) return url;
+  const fid = driveFileIdFromUrl(url);
+  if(fid) return `https://drive.google.com/thumbnail?id=${fid}&sz=w400`;
+  return url;
+}
+
+function allSlipUrls(e) {
+  // ถ้ามี slipUrls (synced) ให้ใช้ synced เท่านั้น
+  // ถ้าไม่มี ให้ดูจาก slipData (base64 ที่รอ sync)
+  const synced = toUrlArray(e.slipUrls).filter(u=>!u.startsWith('data:'));
+  if(synced.length > 0) return synced;
+  return (e.slipData||[]).map(d=>d.b64||d).filter(Boolean);
+}
+
+function allRcptUrls(e) {
+  const synced = toUrlArray(e.rcptUrls).filter(u=>!u.startsWith('data:'));
+  if(synced.length > 0) return synced;
+  return (e.rcptData||[]).map(d=>d.b64||d).filter(Boolean);
+}
+
+let _toastTimer;
+function toast(msg, type) {
+  const el = $('toast');
+  if(!el) return;
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.classList.remove('show'); }, 3000);
+}
+
+// ══════════════════════════════
+//  EXPORT PDF
+// ══════════════════════════════
+async function exportPDF() {
+  // ── รวบรวม expense ──
+  const selIds = [...S.selectedIds];
+  let exps;
+  if(S.selectMode && selIds.length > 0) {
+    exps = S.expenses.filter(e => selIds.includes(e.id));
+  } else {
+    const pf=$('listProjSel')?.value||'', af=$('listActSel')?.value||'',
+          c1=$('listCatL1')?.value||'', c2=$('listCatL2')?.value||'',
+          py=$('listPayerSel')?.value||'';
+    exps = [...S.expenses];
+    if(pf) exps=exps.filter(e=>e.projectId===pf);
+    if(af) exps=exps.filter(e=>e.activityId===af);
+    if(c1) exps=exps.filter(e=>e.catL1===c1);
+    if(c2) exps=exps.filter(e=>e.catL2===c2);
+    if(py) exps=exps.filter(e=>(e.payer||'')===py);
+  }
+  if(!exps.length){ toast('ไม่มีรายการที่จะ Export','err'); return; }
+
+  // sort: project > activity > catL1 > date
+  exps.sort((a,b)=>{
+    const p=(a.projectName||'').localeCompare(b.projectName||'','th'); if(p) return p;
+    const ac=(a.activityName||'').localeCompare(b.activityName||'','th'); if(ac) return ac;
+    const c=(a.catL1||'').localeCompare(b.catL1||'','th'); if(c) return c;
+    return (a.date||'').localeCompare(b.date||'');
+  });
+
+  const projLabel=(()=>{const pid=$('listProjSel')?.value;return pid?(S.projects.find(p=>p.id===pid)?.name||'—'):'ทุกโครงการ';})();
+  const today=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  const totNet=exps.reduce((s,e)=>s+(parseFloat(e.netAmount)||parseFloat(e.amount)||0),0);
+  const totVAT=exps.reduce((s,e)=>s+(parseFloat(e.vatAmt)||0),0);
+  const totWHT=exps.reduce((s,e)=>s+(parseFloat(e.whtAmt)||0),0);
+  const totBef=exps.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const dates=exps.map(e=>e.date||'').filter(Boolean).sort();
+  const dRange=dates.length===0?'':(dates[0]===dates[dates.length-1]?fmtDate(dates[0]):`${fmtDate(dates[0])} — ${fmtDate(dates[dates.length-1])}`);
+
+  function B(n){return isNaN(n)||n==null?'—':parseFloat(n).toLocaleString('th-TH',{minimumFractionDigits:2});}
+  function thumb(url){
+    if(!url||url.startsWith('data:')) return url||'';
+    const m1=url.match(/\/file\/d\/([^/]+)/),m2=url.match(/[?&]id=([^&]+)/);
+    const fid=m1?m1[1]:m2?m2[1]:null;
+    return fid?`https://drive.google.com/thumbnail?id=${fid}&sz=w800`:url;
+  }
+  function getArr(e,field){
+    const raw=e[field]; if(!raw) return [];
+    let arr=Array.isArray(raw)?raw:(()=>{try{return JSON.parse(raw);}catch(_){return raw.split(',').map(s=>s.trim());}})();
+    return arr.filter(u=>u&&!u.startsWith('data:'));
+  }
+
+  // ── สร้าง HTML ต่อรายการ ──
+  function itemHtml(e, idx) {
+    const net=parseFloat(e.netAmount)||parseFloat(e.amount)||0;
+    const bef=parseFloat(e.amount)||0;
+    const vat=parseFloat(e.vatAmt)||0;
+    const wht=parseFloat(e.whtAmt)||0;
+    const slips=getArr(e,'slipUrls');
+    const rcts =getArr(e,'rcptUrls');
+    // 2 fixed slots: slot0=สลิป, slot1=ใบเสร็จ
+    const slot0=slips[0]||null;
+    const slot1=rcts[0]||null;
+
+    function imgSlot(url, label, icon) {
+      return `<div class="img-slot">
+        <div class="slot-hdr">${icon} ${label}</div>
+        <div class="slot-body">
+          ${url
+            ? `<img src="${thumb(url)}" alt="${label}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            : ''}
+          <div class="slot-empty" style="display:${url?'none':'flex'}">—</div>
+        </div>
+      </div>`;
+    }
+
+    return `<div class="item">
+      <div class="item-left">
+        <div class="i-num">${idx+1}</div>
+        <div class="i-info">
+          <div class="i-date">${fmtDate(e.date)}</div>
+          <div class="i-proj">${e.projectName||''}${e.activityName?' › '+e.activityName:''}</div>
+          <div class="i-cat">${e.catL1||''} › ${e.catL2||''}${e.catL3?' › '+e.catL3:''}</div>
+          <div class="i-desc">${e.description||e.catL3||''}</div>
+          <div class="i-doc">
+            <span class="doc-badge ${e.docType==='ใบกำกับภาษี'?'doc-tax':e.docType==='ใบเสร็จรับเงิน'?'doc-rcpt':''}">${e.docType||'—'}</span>
+            ${e.payer?`<span class="i-payer">👤 ${e.payer}</span>`:''}
+          </div>
+          ${e.vendor?`<div class="i-vendor">🏪 ${e.vendor}</div>`:''}
+          <div class="i-amt">
+            <div class="amt-line"><span>ยอดก่อน VAT</span><b>฿${B(bef)}</b></div>
+            ${vat>0?`<div class="amt-line vat"><span>+ VAT ${e.vatRate||7}%</span><b>฿${B(vat)}</b></div>`:''}
+            ${wht>0?`<div class="amt-line wht"><span>− WHT ${e.whtRate||3}%</span><b>฿${B(wht)}</b></div>`:''}
+            <div class="amt-net"><span>ยอดสุทธิ</span><b>฿${B(net)}</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="item-right">
+        ${imgSlot(slot0, 'สลิปโอนเงิน', '🏦')}
+        ${imgSlot(slot1, 'ใบเสร็จ / ใบกำกับภาษี', '🧾')}
+      </div>
+    </div>`;
+  }
+
+  // ── จัดกลุ่มและ paginate (2 items/page, หมวดใหม่ขึ้นหน้าใหม่เสมอ) ──
+  const groups={};
+  exps.forEach((e,i)=>{ const k=e.catL1||'ไม่ระบุ'; if(!groups[k]) groups[k]=[]; groups[k].push({e,i}); });
+
+  // แบ่งหน้า: แต่ละหมวด (catL1) เริ่มหน้าใหม่เสมอ; ภายในหมวดเดียวกัน 2 items/page
+  const pages=[];
+  Object.entries(groups).forEach(([cat1, items], gi)=>{
+    const gNet=items.reduce((s,{e})=>s+(parseFloat(e.netAmount)||parseFloat(e.amount)||0),0);
+    let itemsOnPage=0, curPage=[];
+    items.forEach(({e,i}, ii)=>{
+      if(ii===0){
+        // เริ่มหน้าใหม่สำหรับหมวดนี้
+        if(curPage.length) pages.push(curPage);
+        curPage=[];
+        itemsOnPage=0;
+        curPage.push({type:'header', cat1, count:items.length, net:gNet});
+      } else if(itemsOnPage>=2){
+        // เต็ม 2 รายการ ขึ้นหน้าใหม่ภายในหมวดเดียวกัน
+        pages.push(curPage); curPage=[]; itemsOnPage=0;
+        // ใส่ header ซ้ำ (ต่อ) เพื่อบอกว่ายังอยู่หมวดเดิม
+        curPage.push({type:'header_cont', cat1});
+      }
+      curPage.push({type:'item', e, i});
+      itemsOnPage++;
+    });
+    // footer อยู่ท้ายหน้าสุดท้ายของหมวดนี้เสมอ
+    curPage.push({type:'footer', cat1, count:items.length, net:gNet});
+    pages.push(curPage);
+    curPage=[];
+  });
+
+  const pagesHtml = pages.map((page,pi)=>`
+    <div class="a4-page">
+      ${pi===0?`
+      <div class="page-hdr">
+        <div class="ph-l">
+          <div class="ph-title">🧾 รายงานค่าใช้จ่ายโครงการ</div>
+          <div class="ph-sub">📁 ${projLabel}${dRange?' &nbsp;·&nbsp; 📅 '+dRange:''} &nbsp;·&nbsp; ${exps.length} รายการ</div>
+        </div>
+        <div class="ph-r">
+          <div class="ph-big">฿${B(totNet)}</div>
+          <div class="ph-sm">${totVAT>0?'VAT ฿'+B(totVAT)+' &nbsp;':''}${totWHT>0?'WHT ฿'+B(totWHT)+' &nbsp;':''}</div>
+          <div class="ph-sm">พิมพ์: ${today}</div>
+        </div>
+      </div>`:'<div class="page-cont-lbl">ต่อ (หน้า '+(pi+1)+')</div>'}
+      ${page.map(b=>{
+        if(b.type==='header')      return `<div class="g-hdr">▶ ${b.cat1} <span class="g-cnt">${b.count} รายการ</span> <span class="g-tot">฿${B(b.net)}</span></div>`;
+        if(b.type==='header_cont') return `<div class="g-hdr g-hdr-cont">▶ ${b.cat1} <span class="g-cnt" style="opacity:.6">(ต่อ)</span></div>`;
+        if(b.type==='item')        return itemHtml(b.e, b.i);
+        if(b.type==='footer')      return `<div class="g-ftr">รวม ${b.cat1} — ${b.count} รายการ = <b>฿${B(b.net)}</b></div>`;
+        return '';
+      }).join('')}
+      ${pi===pages.length-1?`
+      <div class="page-ftr">
+        <span>🧾 Field Expense Tracker · ${today}</span>
+        <span>รวมทั้งหมด ${exps.length} รายการ = <b>฿${B(totNet)}</b></span>
+      </div>`:''}
+    </div>`).join('');
+
+  const html = `<!DOCTYPE html><html lang="th"><head>
+  <meta charset="UTF-8">
+  <title>รายงานค่าใช้จ่าย — ${projLabel}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Sarabun',sans-serif;background:#d1d5db;padding:0}
+
+    /* ── Preview bar (screen only) ── */
+    .print-bar{position:fixed;top:0;left:0;right:0;z-index:999;background:#1d4ed8;color:#fff;
+      padding:8px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    .print-bar .title{flex:1;font-size:14px;font-weight:700}
+    .print-bar .info{font-size:12px;opacity:.85}
+    .btn-print{background:#fff;color:#1d4ed8;border:none;padding:7px 20px;border-radius:6px;
+      font-size:13px;font-weight:700;font-family:inherit;cursor:pointer}
+    .btn-close{background:rgba(255,255,255,.2);color:#fff;border:none;padding:7px 14px;
+      border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit}
+
+    /* ── A4 page (screen) ── */
+    .pages-wrap{padding:56px 16px 24px}
+    .a4-page{
+      background:#fff;width:210mm;margin:0 auto 12px;
+      padding:10mm 12mm;
+      box-shadow:0 2px 16px rgba(0,0,0,.18);
+      min-height:297mm;
+      display:flex;flex-direction:column;
+    }
+
+    /* ── Page header ── */
+    .page-hdr{background:#1d4ed8;color:#fff;padding:10px 14px;border-radius:6px;margin-bottom:10px;
+      display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0}
+    .ph-title{font-size:16px;font-weight:700;margin-bottom:3px}
+    .ph-sub{font-size:11px;opacity:.85}
+    .ph-r{text-align:right}
+    .ph-big{font-size:18px;font-weight:700}
+    .ph-sm{font-size:10px;opacity:.8;line-height:1.6}
+    .page-cont-lbl{font-size:11px;color:#9ca3af;text-align:right;margin-bottom:4px;flex-shrink:0}
+
+    /* ── Group headers/footers ── */
+    .g-hdr{background:#eff6ff;color:#1d4ed8;font-weight:700;font-size:12px;
+      padding:5px 10px;border-radius:5px;margin-bottom:4px;flex-shrink:0;
+      display:flex;align-items:center;gap:8px}
+    .g-cnt{font-weight:400;color:#6b7280;font-size:11px;font-weight:400}
+    .g-hdr-cont{opacity:.85;font-style:italic}
+    .g-ftr{text-align:right;font-size:11px;color:#6b7280;padding:4px 8px 0;
+      border-top:1px solid #e5e7eb;margin-top:4px;flex-shrink:0}
+    .g-tot{margin-left:auto;font-weight:700;color:#1d4ed8}
+
+    /* ── Item layout ── */
+    .item{height:119mm;display:flex;border:1px solid #e5e7eb;border-radius:6px;
+      overflow:hidden;margin-bottom:6px;flex-shrink:0}
+    .item-left{width:52mm;padding:6px 8px;border-right:1px solid #e5e7eb;
+      display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;background:#fff}
+    .i-num{font-size:10px;font-weight:700;color:#9ca3af;margin-bottom:3px}
+    .i-date{font-size:11px;font-weight:600;color:#374151;margin-bottom:1px}
+    .i-proj{font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;
+      text-overflow:ellipsis;margin-bottom:1px}
+    .i-cat{font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;
+      text-overflow:ellipsis;margin-bottom:2px}
+    .i-desc{font-size:11px;color:#111827;font-weight:500;margin-bottom:3px;
+      overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .i-doc{display:flex;align-items:center;gap:4px;margin-bottom:3px}
+    .doc-badge{font-size:9px;padding:1px 5px;border-radius:3px;
+      background:#f3f4f6;color:#374151;border:1px solid #e5e7eb}
+    .doc-tax{background:#fef3c7;color:#92400e;border-color:#fcd34d}
+    .doc-rcpt{background:#d1fae5;color:#065f46;border-color:#6ee7b7}
+    .i-payer{font-size:9px;color:#6b7280}
+    .i-vendor{font-size:10px;color:#6b7280;margin-bottom:3px;white-space:nowrap;
+      overflow:hidden;text-overflow:ellipsis}
+    .i-amt{margin-top:auto;border-top:1px solid #f3f4f6;padding-top:4px}
+    .amt-line{display:flex;justify-content:space-between;font-size:10px;color:#6b7280;margin-bottom:1px}
+    .amt-line b{font-weight:600;color:#374151}
+    .amt-line.vat b{color:#d97706}
+    .amt-line.wht b{color:#dc2626}
+    .amt-net{display:flex;justify-content:space-between;font-size:12px;
+      font-weight:700;color:#1d4ed8;border-top:1px solid #e5e7eb;padding-top:3px;margin-top:2px}
+
+    /* ── Image slots ── */
+    .item-right{flex:1;display:flex;gap:0;min-width:0}
+    .img-slot{flex:1;display:flex;flex-direction:column;border-left:1px solid #e5e7eb}
+    .img-slot:first-child{border-left:none}
+    .slot-hdr{background:#f8fafc;padding:4px 8px;font-size:9px;font-weight:700;color:#374151;
+      border-bottom:1px solid #e5e7eb;flex-shrink:0}
+    .slot-body{flex:1;position:relative;overflow:hidden;background:#f9fafb;
+      display:flex;align-items:center;justify-content:center;padding:4px}
+    .slot-body img{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
+    .slot-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+      color:#d1d5db;font-size:24px;border:2px dashed #e5e7eb;border-radius:4px}
+
+    /* ── Page footer ── */
+    .page-ftr{margin-top:auto;padding-top:6px;border-top:1px solid #e5e7eb;
+      display:flex;justify-content:space-between;font-size:10px;color:#6b7280;flex-shrink:0}
+
+    /* ── PRINT styles — exact A4 lock ── */
+    @page{
+      size:A4 portrait;
+      margin:0;  /* ปล่อยให้ .a4-page จัดการ margin เอง */
+    }
+    @media print{
+      /* Force color printing */
+      *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+
+      html,body{width:210mm;margin:0!important;padding:0!important;background:#fff!important}
+      .print-bar{display:none!important}
+      .pages-wrap{padding:0!important;margin:0!important;background:#fff!important}
+
+      /* A4 page — exact dimensions, no overflow */
+      .a4-page{
+        width:210mm!important;
+        height:297mm!important;
+        min-height:unset!important;
+        padding:8mm 10mm!important;
+        margin:0!important;
+        box-shadow:none!important;
+        border-radius:0!important;
+        box-sizing:border-box!important;
+        overflow:hidden!important;
+        display:flex!important;
+        flex-direction:column!important;
+        page-break-after:always;
+        break-after:page;
+      }
+      .a4-page:last-child{page-break-after:avoid;break-after:avoid}
+
+      /* Item — fixed height, no break inside */
+      .item{
+        height:119mm!important;
+        min-height:unset!important;
+        max-height:119mm!important;
+        flex-shrink:0!important;
+        overflow:hidden!important;
+        page-break-inside:avoid;
+        break-inside:avoid;
+        border-radius:4px!important;
+      }
+      .item-left{width:52mm!important;flex-shrink:0!important;overflow:hidden!important}
+      .item-right{flex:1!important;min-width:0!important;overflow:hidden!important}
+      .img-slot{flex:1!important;min-width:0!important;overflow:hidden!important}
+      .slot-body{overflow:hidden!important}
+      .slot-body img{
+        width:100%!important;height:100%!important;
+        max-width:100%!important;max-height:100%!important;
+        object-fit:contain!important;display:block!important;
+      }
+
+      /* Keep background colors */
+      .page-hdr{background:#1d4ed8!important;color:#fff!important;-webkit-print-color-adjust:exact!important}
+      .g-hdr{background:#eff6ff!important;color:#1d4ed8!important}
+      .doc-tax{background:#fef3c7!important;color:#92400e!important}
+      .doc-rcpt{background:#d1fae5!important;color:#065f46!important}
+      .item-left{background:#fff!important}
+      .slot-body{background:#f9fafb!important}
+    }
+  </style>
+</head><body>
+  <div class="print-bar">
+    <span class="title">🧾 รายงานค่าใช้จ่าย — ${projLabel}</span>
+    <span class="info">${exps.length} รายการ &nbsp;·&nbsp; ฿${B(totNet)}</span>
+    <button class="btn-print" onclick="window.print()">🖨️ พิมพ์ / บันทึก PDF</button>
+    <button class="btn-close" onclick="window.close()">✕ ปิด</button>
+  </div>
+  <div class="pages-wrap">
+    ${pagesHtml}
+  </div>
+  <script>
+  function printWhenReady() {
+    const imgs = Array.from(document.querySelectorAll('.slot-body img'));
+    const notLoaded = imgs.filter(img => !img.complete || img.naturalWidth === 0);
+    if(notLoaded.length === 0) { window.print(); return; }
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-family:sans-serif;z-index:9999;flex-direction:column;gap:10px';
+    overlay.innerHTML = '<div style="font-size:28px">⏳</div><div id=_pct>กำลังโหลดรูปภาพ 0/' + notLoaded.length + '</div>';
+    document.body.appendChild(overlay);
+    let done = 0;
+    notLoaded.forEach(img => {
+      const fin = () => {
+        done++;
+        const el = document.getElementById('_pct');
+        if(el) el.textContent = 'กำลังโหลดรูปภาพ ' + done + '/' + notLoaded.length;
+        if(done >= notLoaded.length) { document.body.removeChild(overlay); setTimeout(()=>window.print(),400); }
+      };
+      img.addEventListener('load', fin, {once:true});
+      img.addEventListener('error', fin, {once:true});
+    });
+    // Timeout fallback: 15 seconds
+    setTimeout(()=>{ if(document.body.contains(overlay)) { document.body.removeChild(overlay); window.print(); } }, 15000);
+  }
+  <\/script>
+</body></html>`;
+
+  const w=window.open('','_blank','width=900,height=800');
+  if(!w){ toast('กรุณาอนุญาต Pop-up ในเบราว์เซอร์','err'); return; }
+  w.document.write(html);
+  w.document.close();
+}
+
+// ══════════════════════════════
+//  SERVICE WORKER
+// ══════════════════════════════
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+// ══════════════════════════════
+//  INIT
+// ══════════════════════════════
+function init() {
+  load();
+  _initScriptUrl(); // ← sync scriptUrl ให้แน่ใจหลัง load
+  checkSession();
+  updateConnStatus();
+  window.addEventListener('online',  updateConnStatus);
+  window.addEventListener('offline', updateConnStatus);
+  showView('dashboard');
+  populateFormSelects();
+  renderDashboard();
+  // Auto backup every 30 min if admin
+  setInterval(()=>{ if(isAdmin()) createBackup(true); }, 30*60*1000);
+}
+
+init();
+</script>
+</body>
+</html>
